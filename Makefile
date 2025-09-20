@@ -4,7 +4,8 @@ help:
 	@echo "Available commands:"
 	@echo "  setup      - Set up the project environment and start database"
 	@echo "  build      - Build the C++ application"
-	@echo "  run        - Run the application"
+	@echo "  run        - Run the application (default port 8080)"
+	@echo "             - Usage: make run PORT=3000"
 	@echo "  stop       - Stop the application"
 	@echo "  test       - Run tests"
 	@echo "  clean      - Clean up temporary files and stop containers"
@@ -30,7 +31,7 @@ build:
 
 run:
 	@echo "Running the application..."
-	@./bin/start.sh
+	@./bin/start.sh $(PORT)
 
 stop:
 	@echo "Stopping the application..."

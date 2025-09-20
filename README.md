@@ -188,7 +188,8 @@ The project includes several Make commands for easy development:
 - `make check-deps` - Check if all required dependencies are installed
 - `make setup` - Initialize project and start PostgreSQL database
 - `make build` - Build the C++ application
-- `make run` - Start the messaging service on port 8080
+- `make run` - Start the messaging service on port 8080 (default)
+- `make run PORT=3000` - Start the messaging service on a custom port
 - `make stop` - Stop the messaging service
 - `make test` - Run endpoint tests
 - `make clean` - Stop containers and clean up temporary files
@@ -202,10 +203,34 @@ The project includes several Make commands for easy development:
 
 - Use `make setup` to start PostgreSQL database and initialize the project
 - Use `make build` to build the C++ application
-- Use `make run` to start the development server
+- Use `make run` to start the development server (default port 8080)
+- Use `make run PORT=3000` to start on a custom port
 - Use `make test` to run tests
 - Use `make stop` to stop the application
 - Use `make clean` to stop containers and clean up
+
+### Port Configuration
+
+The messaging service runs on port 8080 by default, but you can specify a custom port:
+
+```bash
+# Default port (8080)
+make run
+
+# Custom port
+make run PORT=3000
+
+# Direct script usage
+./bin/start.sh 3000
+
+# Direct executable usage
+./build/messaging-service 3000
+
+# Show help for start.sh
+./bin/start.sh --help
+```
+
+The application validates that the port is between 1 and 65535 and will show an error message for invalid ports. Both the start script and the C++ executable provide helpful error messages and usage information.
 
 ## Database
 
