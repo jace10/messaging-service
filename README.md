@@ -109,27 +109,103 @@ This project structure is laid out for you already. You are welcome to move or c
 ```
 .
 ├── bin/                    # Scripts and executables
-│   ├── start.sh           # Application startup script
+│   ├── start.sh           # Application startup script (builds and runs C++ app)
+│   ├── stop.sh            # Application stop script
 │   └── test.sh            # API testing script with curl commands
+├── src/                    # C++ source code
+│   ├── main.cpp           # Application entry point
+│   ├── server.h/.cpp      # HTTP server setup and routing
+│   ├── message_handler.h/.cpp  # SMS/Email sending endpoints
+│   ├── webhook_handler.h/.cpp  # Incoming webhook endpoints
+│   └── conversation_handler.h/.cpp  # Conversation management endpoints
+├── build/                  # Build directory (created by CMake)
+├── CMakeLists.txt         # CMake build configuration
 ├── docker-compose.yml      # PostgreSQL database setup
-├── Makefile               # Build and development commands with docker-compose integration
+├── Makefile               # Build and development commands
 └── README.md              # This file
+```
+
+## Prerequisites
+
+Before running this project, ensure you have the following installed on your system:
+
+### Required Software
+
+- **Docker & Docker Compose** - For running PostgreSQL database
+  - macOS: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) or use `brew install colima` for a lightweight alternative
+  - Linux: Install Docker and docker-compose
+  - Windows: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
+- **CMake** (version 3.16 or higher) - For building the C++ application
+  - macOS: `brew install cmake`
+  - Linux: `sudo apt-get install cmake` (Ubuntu/Debian) or `sudo yum install cmake` (RHEL/CentOS)
+  - Windows: Download from [cmake.org](https://cmake.org/download/)
+
+- **C++ Compiler** with C++17 support
+  - macOS: Xcode Command Line Tools (`xcode-select --install`)
+  - Linux: GCC 7+ or Clang 5+
+  - Windows: Visual Studio 2019+ or MinGW
+
+- **cpp-httplib** - HTTP server library
+  - macOS: `brew install cpp-httplib`
+  - Linux: Install from source or package manager
+  - Windows: Install via vcpkg or build from source
+
+### Optional Tools
+
+- **Make** - For running build commands (usually pre-installed)
+- **curl** - For testing endpoints (usually pre-installed)
+- **Git** - For version control (usually pre-installed)
+
+### Verification
+
+You can verify your installation by running:
+```bash
+# Quick dependency check
+./bin/check-deps.sh
+
+# Or check manually:
+docker --version
+docker-compose --version
+cmake --version
+g++ --version  # or clang++ --version
+pkg-config --modversion cpp-httplib
 ```
 
 ## Getting Started
 
 1. Clone the repository
-2. Run `make setup` to initialize the project
-3. Run `docker-compose up -d` to start the PostgreSQL database, or modify it to choose a database of your choice
+2. Run `make setup` to initialize the project and start PostgreSQL
+3. Run `make build` to build the C++ application
 4. Run `make run` to start the application
 5. Run `make test` to run tests
+6. Run `make stop` to stop the application
+
+## Available Commands
+
+The project includes several Make commands for easy development:
+
+- `make check-deps` - Check if all required dependencies are installed
+- `make setup` - Initialize project and start PostgreSQL database
+- `make build` - Build the C++ application
+- `make run` - Start the messaging service on port 8080
+- `make stop` - Stop the messaging service
+- `make test` - Run endpoint tests
+- `make clean` - Stop containers and clean up temporary files
+- `make db-up` - Start PostgreSQL database only
+- `make db-down` - Stop PostgreSQL database only
+- `make db-logs` - Show database logs
+- `make db-shell` - Connect to database shell
+- `make help` - Show all available commands
 
 ## Development
 
-- Use `docker-compose up -d` to start the PostgreSQL database
+- Use `make setup` to start PostgreSQL database and initialize the project
+- Use `make build` to build the C++ application
 - Use `make run` to start the development server
 - Use `make test` to run tests
-- Use `docker-compose down` to stop the database
+- Use `make stop` to stop the application
+- Use `make clean` to stop containers and clean up
 
 ## Database
 
