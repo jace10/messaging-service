@@ -1,3 +1,0 @@
-/Users/mathjp/Documents/GitHub/messaging-service/build/CMakeFiles/messaging-service.dir
-/Users/mathjp/Documents/GitHub/messaging-service/build/CMakeFiles/edit_cache.dir
-/Users/mathjp/Documents/GitHub/messaging-service/build/CMakeFiles/rebuild_cache.dir
