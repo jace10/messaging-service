@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Platform detection wrapper for start script
+# This script detects the platform and calls the appropriate start script
+
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
+    # Windows (Git Bash, Cygwin, or MSYS)
+    exec bin/windows/start.bat "$@"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    exec bin/unix/start.sh "$@"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux
+    exec bin/unix/start.sh "$@"
+else
+    # Default to Unix for other platforms
+    exec bin/unix/start.sh "$@"
+fi

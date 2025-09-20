@@ -108,10 +108,21 @@ This project structure is laid out for you already. You are welcome to move or c
 
 ```
 .
-├── bin/                    # Scripts and executables
-│   ├── start.sh           # Application startup script (builds and runs C++ app)
-│   ├── stop.sh            # Application stop script
-│   └── test.sh            # API testing script with curl commands
+├── bin/                    # Platform-agnostic script wrappers
+│   ├── start              # Cross-platform start script wrapper
+│   ├── stop               # Cross-platform stop script wrapper
+│   ├── test               # Cross-platform test script wrapper
+│   ├── check-deps         # Cross-platform dependency checker wrapper
+│   ├── unix/              # Unix-specific scripts (macOS/Linux)
+│   │   ├── start.sh       # Unix start script
+│   │   ├── stop.sh        # Unix stop script
+│   │   ├── test.sh        # Unix test script
+│   │   └── check-deps.sh  # Unix dependency checker
+│   └── windows/           # Windows-specific scripts
+│       ├── start.bat      # Windows start script
+│       ├── stop.bat       # Windows stop script
+│       ├── test.bat       # Windows test script
+│       └── check-deps.bat # Windows dependency checker
 ├── src/                    # C++ source code
 │   ├── main.cpp           # Application entry point
 │   ├── server.h/.cpp      # HTTP server setup and routing
@@ -121,7 +132,8 @@ This project structure is laid out for you already. You are welcome to move or c
 ├── build/                  # Build directory (created by CMake)
 ├── CMakeLists.txt         # CMake build configuration
 ├── docker-compose.yml      # PostgreSQL database setup
-├── Makefile               # Build and development commands
+├── Makefile               # Build and development commands (Unix)
+├── make.bat               # Build and development commands (Windows)
 └── README.md              # This file
 ```
 
@@ -139,12 +151,12 @@ Before running this project, ensure you have the following installed on your sys
 - **CMake** (version 3.16 or higher) - For building the C++ application
   - macOS: `brew install cmake`
   - Linux: `sudo apt-get install cmake` (Ubuntu/Debian) or `sudo yum install cmake` (RHEL/CentOS)
-  - Windows: Download from [cmake.org](https://cmake.org/download/)
+  - Windows: Download from [cmake.org](https://cmake.org/download/) or use `winget install Kitware.CMake`
 
 - **C++ Compiler** with C++17 support
   - macOS: Xcode Command Line Tools (`xcode-select --install`)
   - Linux: GCC 7+ or Clang 5+
-  - Windows: Visual Studio 2019+ or MinGW
+  - Windows: Visual Studio 2019+ or MinGW, or use `winget install Microsoft.VisualStudio.2022.BuildTools`
 
 - **cpp-httplib** - HTTP server library
   - macOS: `brew install cpp-httplib`
@@ -160,9 +172,11 @@ Before running this project, ensure you have the following installed on your sys
 ### Verification
 
 You can verify your installation by running:
+
+**macOS/Linux:**
 ```bash
 # Quick dependency check
-./bin/check-deps.sh
+./bin/check-deps
 
 # Or check manually:
 docker --version
@@ -172,8 +186,21 @@ g++ --version  # or clang++ --version
 pkg-config --modversion cpp-httplib
 ```
 
+**Windows:**
+```cmd
+REM Quick dependency check
+bin\check-deps
+
+REM Or check manually:
+docker --version
+docker-compose --version
+cmake --version
+cl  # or g++ --version
+```
+
 ## Getting Started
 
+**macOS/Linux:**
 1. Clone the repository
 2. Run `make setup` to initialize the project and start PostgreSQL
 3. Run `make build` to build the C++ application
@@ -181,10 +208,19 @@ pkg-config --modversion cpp-httplib
 5. Run `make test` to run tests
 6. Run `make stop` to stop the application
 
+**Windows:**
+1. Clone the repository
+2. Run `make.bat setup` to initialize the project and start PostgreSQL
+3. Run `make.bat build` to build the C++ application
+4. Run `make.bat run` to start the application
+5. Run `make.bat test` to run tests
+6. Run `make.bat stop` to stop the application
+
 ## Available Commands
 
-The project includes several Make commands for easy development:
+The project includes several commands for easy development:
 
+**macOS/Linux (using Make):**
 - `make check-deps` - Check if all required dependencies are installed
 - `make setup` - Initialize project and start PostgreSQL database
 - `make build` - Build the C++ application
@@ -198,6 +234,21 @@ The project includes several Make commands for easy development:
 - `make db-logs` - Show database logs
 - `make db-shell` - Connect to database shell
 - `make help` - Show all available commands
+
+**Windows (using make.bat):**
+- `make.bat check-deps` - Check if all required dependencies are installed
+- `make.bat setup` - Initialize project and start PostgreSQL database
+- `make.bat build` - Build the C++ application
+- `make.bat run` - Start the messaging service on port 8080 (default)
+- `make.bat run PORT=3000` - Start the messaging service on a custom port
+- `make.bat stop` - Stop the messaging service
+- `make.bat test` - Run endpoint tests
+- `make.bat clean` - Stop containers and clean up temporary files
+- `make.bat db-up` - Start PostgreSQL database only
+- `make.bat db-down` - Stop PostgreSQL database only
+- `make.bat db-logs` - Show database logs
+- `make.bat db-shell` - Connect to database shell
+- `make.bat help` - Show all available commands
 
 ## Development
 
@@ -213,6 +264,7 @@ The project includes several Make commands for easy development:
 
 The messaging service runs on port 8080 by default, but you can specify a custom port:
 
+**macOS/Linux:**
 ```bash
 # Default port (8080)
 make run
@@ -221,13 +273,31 @@ make run
 make run PORT=3000
 
 # Direct script usage
-./bin/start.sh 3000
+./bin/start 3000
 
 # Direct executable usage
 ./build/messaging-service 3000
 
-# Show help for start.sh
-./bin/start.sh --help
+# Show help for start script
+./bin/start --help
+```
+
+**Windows:**
+```cmd
+REM Default port (8080)
+make.bat run
+
+REM Custom port
+make.bat run PORT=3000
+
+REM Direct script usage
+bin\start 3000
+
+REM Direct executable usage
+build\Release\messaging-service.exe 3000
+
+REM Show help for start script
+bin\start --help
 ```
 
 The application validates that the port is between 1 and 65535 and will show an error message for invalid ports. Both the start script and the C++ executable provide helpful error messages and usage information.

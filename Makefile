@@ -31,22 +31,22 @@ build:
 
 run:
 	@echo "Running the application..."
-	@./bin/start.sh $(PORT)
+	@./bin/start $(PORT)
 
 stop:
 	@echo "Stopping the application..."
-	@./bin/stop.sh
+	@./bin/stop
 
 check-deps:
 	@echo "Checking dependencies..."
-	@./bin/check-deps.sh
+	@./bin/check-deps
 
 test:
 	@echo "Running tests..."
 	@echo "Starting test database if not running..."
 	@docker-compose up -d
 	@echo "Running test script..."
-	@./bin/test.sh
+	@./bin/test
 
 clean:
 	@echo "Cleaning up..."
