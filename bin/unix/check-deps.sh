@@ -64,18 +64,40 @@ else
 fi
 echo
 
-# Check cpp-httplib
+# Check Libraries
 echo "📚 Libraries:"
 if check_command "pkg-config"; then
+    # Check cpp-httplib
     if pkg-config --exists cpp-httplib; then
         local version=$(pkg-config --modversion cpp-httplib)
         echo -e "${GREEN}✅ cpp-httplib${NC} - Version: ${YELLOW}$version${NC}"
     else
-        echo -e "${RED}❌ cpp-httplib${NC} - Not found"
-        echo -e "   Install with: ${YELLOW}brew install cpp-httplib${NC} (macOS)"
+        # Try to find cpp-httplib header directly (header-only library)
+        if [ -f "/opt/homebrew/include/httplib.h" ] || [ -f "/usr/include/httplib.h" ] || [ -f "/usr/local/include/httplib.h" ]; then
+            echo -e "${GREEN}✅ cpp-httplib${NC} - Found header files (header-only library)"
+        else
+            echo -e "${RED}❌ cpp-httplib${NC} - Not found"
+            echo -e "   Install with: ${YELLOW}brew install cpp-httplib${NC} (macOS)"
+        fi
+    fi
+    
+    # Check PostgreSQL
+    if pkg-config --exists libpq; then
+        local version=$(pkg-config --modversion libpq)
+        echo -e "${GREEN}✅ PostgreSQL (libpq)${NC} - Version: ${YELLOW}$version${NC}"
+    else
+        # Try to find libpq directly
+        if [ -f "/opt/homebrew/lib/postgresql@14/libpq.dylib" ] || [ -f "/usr/lib/libpq.so" ] || [ -f "/usr/local/lib/libpq.so" ]; then
+            echo -e "${GREEN}✅ PostgreSQL (libpq)${NC} - Found library files"
+        else
+            echo -e "${RED}❌ PostgreSQL (libpq)${NC} - Not found"
+            echo -e "   Install with: ${YELLOW}brew install postgresql${NC} (macOS)"
+            echo -e "   Or: ${YELLOW}sudo apt-get install libpq-dev${NC} (Ubuntu/Debian)"
+        fi
     fi
 else
-    echo -e "${YELLOW}⚠️  pkg-config${NC} - Not found (needed to check cpp-httplib)"
+    echo -e "${YELLOW}⚠️  pkg-config${NC} - Not found (needed to check libraries)"
+    echo -e "${YELLOW}⚠️  Cannot check cpp-httplib and PostgreSQL${NC}"
 fi
 echo
 
@@ -89,15 +111,15 @@ echo
 echo "📖 Installation Instructions:"
 echo
 echo "macOS:"
-echo "  brew install docker cmake cpp-httplib"
+echo "  brew install docker cmake cpp-httplib postgresql"
 echo "  # Or install Docker Desktop from https://docker.com"
 echo
 echo "Ubuntu/Debian:"
 echo "  sudo apt-get update"
-echo "  sudo apt-get install docker.io docker-compose cmake g++ libcpp-httplib-dev"
+echo "  sudo apt-get install docker.io docker-compose cmake g++ libcpp-httplib-dev libpq-dev"
 echo
 echo "RHEL/CentOS:"
-echo "  sudo yum install docker cmake gcc-c++"
+echo "  sudo yum install docker cmake gcc-c++ postgresql-devel"
 echo "  # Install cpp-httplib from source or use package manager"
 echo
 

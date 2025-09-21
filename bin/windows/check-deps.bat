@@ -66,6 +66,14 @@ if %errorlevel% equ 0 (
 )
 echo.
 
+REM Check Libraries
+echo 📚 Libraries:
+REM Note: Library checking is more complex on Windows
+REM PostgreSQL libraries should be available if installed via vcpkg or similar
+echo ⚠️  Library checks (PostgreSQL, cpp-httplib) require manual verification
+echo    Check if libpq.lib and cpp-httplib are available in your build environment
+echo.
+
 REM Check optional tools
 echo 🔧 Optional Tools:
 call :check_command make
@@ -79,6 +87,7 @@ echo Windows:
 echo   Install Docker Desktop from https://docker.com
 echo   Install CMake from https://cmake.org/download/
 echo   Install Visual Studio 2019+ or MinGW for C++ compiler
+echo   Install PostgreSQL libraries via vcpkg: vcpkg install libpq
 echo   Install cpp-httplib via vcpkg or build from source
 echo.
 echo PowerShell (if available):

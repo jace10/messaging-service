@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     postgresql-client \
     curl \
+    nlohmann-json3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install cpp-httplib from source
