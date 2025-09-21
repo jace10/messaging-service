@@ -3,6 +3,7 @@
 #include <httplib.h>
 #include <string>
 
+//This class handles sending messages
 class MessageHandler {
 public:
     void handleSendSms(const httplib::Request& req, httplib::Response& res);

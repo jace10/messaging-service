@@ -25,6 +25,8 @@ int main(int argc, char* argv[]) {
     
     try {
         auto server = std::make_unique<MessagingServer>(port);
+
+        //loops
         server->start();
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

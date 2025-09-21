@@ -3,6 +3,7 @@
 #include <httplib.h>
 #include <string>
 
+//This class handles conversations
 class ConversationHandler {
 public:
     void handleGetConversations(const httplib::Request& req, httplib::Response& res);

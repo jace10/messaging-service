@@ -6,6 +6,7 @@
 #include <signal.h>
 
 MessagingServer::MessagingServer(int port) : port_(port) {
+    //initialize instance
     server_ = std::make_unique<httplib::Server>();
     setupRoutes();
 }

@@ -3,6 +3,7 @@
 #include <httplib.h>
 #include <string>
 
+//This class handles incoming messages
 class WebhookHandler {
 public:
     void handleIncomingSms(const httplib::Request& req, httplib::Response& res);
