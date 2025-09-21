@@ -13,6 +13,7 @@ MessagingServer::MessagingServer(int port) : port_(port) {
 void MessagingServer::start() {
     std::cout << "Starting server on port " << port_ << "..." << std::endl;
     
+    // 0.0.0.0 listens on all interfaces
     if (!server_->listen("0.0.0.0", port_)) {
         throw std::runtime_error("Failed to start server on port " + std::to_string(port_));
     }
