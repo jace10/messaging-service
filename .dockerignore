@@ -1,0 +1,40 @@
+# Build artifacts
+build/
+*.o
+*.so
+*.a
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Scripts (not needed in container)
+bin/
+Makefile
+make.bat
+
+# Docker files (not needed in container)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# PID files
+*.pid
+
+# Logs
+*.log

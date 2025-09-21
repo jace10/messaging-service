@@ -139,9 +139,22 @@ This project structure is laid out for you already. You are welcome to move or c
 
 ## Prerequisites
 
-Before running this project, ensure you have the following installed on your system:
+You have two options for running this project:
 
-### Required Software
+### Option 1: Docker Container (Recommended)
+
+**Easiest setup - no local dependencies required!**
+
+- **Docker & Docker Compose** - For running the complete application
+  - macOS: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) or use `brew install colima` for a lightweight alternative
+  - Linux: Install Docker and docker-compose
+  - Windows: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
+All C++ dependencies (CMake, compiler, cpp-httplib) are included in the Docker container.
+
+### Option 2: Local Development
+
+If you prefer to build locally, ensure you have the following installed:
 
 - **Docker & Docker Compose** - For running PostgreSQL database
   - macOS: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) or use `brew install colima` for a lightweight alternative
@@ -171,6 +184,18 @@ Before running this project, ensure you have the following installed on your sys
 
 ### Verification
 
+**Docker Container (Recommended):**
+```bash
+# Verify Docker is installed
+docker --version
+docker-compose --version
+
+# Test the complete setup
+docker-compose up --build
+curl http://localhost:8080/health
+```
+
+**Local Development:**
 You can verify your installation by running:
 
 **macOS/Linux:**
@@ -200,6 +225,34 @@ cl  # or g++ --version
 
 ## Getting Started
 
+### Option 1: Docker Container (Recommended)
+
+**Quick Start with Docker:**
+```bash
+# Clone the repository
+git clone <repository-url>
+cd messaging-service
+
+# Start everything with one command
+docker-compose up --build
+
+# Test the service
+curl http://localhost:8080/health
+curl http://localhost:8080/api/conversations
+
+# Stop the services
+docker-compose down
+```
+
+**Docker Commands:**
+- `docker-compose up --build` - Start all services (database + application)
+- `docker-compose up -d --build` - Start in background
+- `docker-compose down` - Stop all services
+- `docker-compose logs -f` - View logs
+- `docker-compose logs -f messaging-service` - View application logs only
+
+### Option 2: Local Development
+
 **macOS/Linux:**
 1. Clone the repository
 2. Run `make setup` to initialize the project and start PostgreSQL
@@ -219,6 +272,18 @@ cl  # or g++ --version
 ## Available Commands
 
 The project includes several commands for easy development:
+
+### Docker Commands (Recommended)
+
+- `docker-compose up --build` - Start all services (database + application)
+- `docker-compose up -d --build` - Start all services in background
+- `docker-compose down` - Stop all services
+- `docker-compose logs -f` - View logs from all services
+- `docker-compose logs -f messaging-service` - View application logs only
+- `docker-compose logs -f postgres` - View database logs only
+- `docker-compose exec postgres psql -U messaging_user -d messaging_service` - Connect to database
+
+### Local Development Commands
 
 **macOS/Linux (using Make):**
 - `make check-deps` - Check if all required dependencies are installed
@@ -251,6 +316,28 @@ The project includes several commands for easy development:
 - `make.bat help` - Show all available commands
 
 ## Development
+
+### Docker Development (Recommended)
+
+The easiest way to develop is using Docker containers:
+
+```bash
+# Start all services
+docker-compose up --build
+
+# View logs
+docker-compose logs -f messaging-service
+
+# Connect to database
+docker-compose exec postgres psql -U messaging_user -d messaging_service
+
+# Stop services
+docker-compose down
+```
+
+### Local Development
+
+If you prefer local development:
 
 - Use `make setup` to start PostgreSQL database and initialize the project
 - Use `make build` to build the C++ application
@@ -311,9 +398,36 @@ The application uses PostgreSQL as its database. The docker-compose.yml file set
 - Password: `messaging_password`
 - Port: `5432` (exposed to host)
 
-To connect to the database directly:
+### Docker Database Access
+
+To connect to the database when using Docker:
+
 ```bash
+# Connect to database shell
+docker-compose exec postgres psql -U messaging_user -d messaging_service
+
+# View database logs
+docker-compose logs -f postgres
+```
+
+### Local Development Database Access
+
+If running locally with `make`:
+
+```bash
+# Connect to database shell
 docker-compose exec postgres psql -U messaging_user -d messaging_service
 ```
 
-Again, you are welcome to make changes here, as long as they're in the docker-compose.yml
+The database schema is automatically initialized with tables for conversations and messages, including sample data for testing.
+
+## Docker Setup
+
+For detailed Docker instructions, troubleshooting, and production considerations, see [DOCKER.md](DOCKER.md).
+
+The Docker setup includes:
+- **Complete C++ build environment** with all dependencies
+- **PostgreSQL database** with automatic schema initialization
+- **Health checks** for both services
+- **Production-ready configuration** with security best practices
+- **Easy development workflow** with hot reloading support
