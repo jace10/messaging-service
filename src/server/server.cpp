@@ -1,7 +1,7 @@
 #include "server.h"
-#include "message_handler.h"
-#include "webhook_handler.h"
-#include "conversation_handler.h"
+#include "../handlers/message_handler.h"
+#include "../handlers/webhook_handler.h"
+#include "../handlers/conversation_handler.h"
 #include <iostream>
 #include <signal.h>
 

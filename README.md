@@ -125,10 +125,13 @@ This project structure is laid out for you already. You are welcome to move or c
 │       └── check-deps.bat # Windows dependency checker
 ├── src/                    # C++ source code
 │   ├── main.cpp           # Application entry point
-│   ├── server.h/.cpp      # HTTP server setup and routing
-│   ├── message_handler.h/.cpp  # SMS/Email sending endpoints
-│   ├── webhook_handler.h/.cpp  # Incoming webhook endpoints
-│   └── conversation_handler.h/.cpp  # Conversation management endpoints
+│   ├── server/            # HTTP server implementation
+│   │   ├── server.h       # Server class definition
+│   │   └── server.cpp     # Server setup and routing
+│   └── handlers/          # Request handlers
+│       ├── message_handler.h/.cpp      # SMS/Email sending endpoints
+│       ├── webhook_handler.h/.cpp      # Incoming webhook endpoints
+│       └── conversation_handler.h/.cpp  # Conversation management endpoints
 ├── build/                  # Build directory (created by CMake)
 ├── CMakeLists.txt         # CMake build configuration
 ├── docker-compose.yml      # PostgreSQL database setup

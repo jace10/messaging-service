@@ -10,10 +10,10 @@ include_directories(/opt/homebrew/include)
 # Source files
 set(SOURCES
     src/main.cpp
-    src/server.cpp
-    src/message_handler.cpp
-    src/webhook_handler.cpp
-    src/conversation_handler.cpp
+    src/server/server.cpp
+    src/handlers/message_handler.cpp
+    src/handlers/webhook_handler.cpp
+    src/handlers/conversation_handler.cpp
 )
 
 # Create executable

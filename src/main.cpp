@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include "server.h"
+#include "server/server.h"
 
 int main(int argc, char* argv[]) {
     int port = 8080; // Default port
