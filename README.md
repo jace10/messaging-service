@@ -114,18 +114,21 @@ This project structure is laid out for you already. You are welcome to move or c
 │   ├── test               # Cross-platform test script wrapper
 │   ├── check-deps         # Cross-platform dependency checker wrapper
 │   ├── db-inspect         # Cross-platform database inspection script
+│   ├── db-clear           # Cross-platform database clearing script
 │   ├── unix/              # Unix-specific scripts (macOS/Linux)
 │   │   ├── start.sh       # Unix start script
 │   │   ├── stop.sh        # Unix stop script
 │   │   ├── test.sh        # Unix test script
 │   │   ├── check-deps.sh  # Unix dependency checker
-│   │   └── db-inspect.sh  # Unix database inspection script
+│   │   ├── db-inspect.sh  # Unix database inspection script
+│   │   └── db-clear.sh    # Unix database clearing script
 │   └── windows/           # Windows-specific scripts
 │       ├── start.bat      # Windows start script
 │       ├── stop.bat       # Windows stop script
 │       ├── test.bat       # Windows test script
 │       ├── check-deps.bat # Windows dependency checker
-│       └── db-inspect.bat # Windows database inspection script
+│       ├── db-inspect.bat # Windows database inspection script
+│       └── db-clear.bat   # Windows database clearing script
 ├── src/                    # C++ source code
 │   ├── main.cpp           # Application entry point
 │   ├── server/            # HTTP server implementation
@@ -380,6 +383,14 @@ make run PORT=3000
 ./bin/db-inspect --messages         # Show only messages
 ./bin/db-inspect --counts           # Show only row counts
 ./bin/db-inspect --help             # Show all options
+
+# Database clearing (⚠️ WARNING: Deletes data!)
+./bin/db-clear                      # Clear all tables with confirmation
+./bin/db-clear --confirm            # Clear all tables without confirmation
+./bin/db-clear --messages           # Clear only messages table
+./bin/db-clear --conversations      # Clear only conversations table
+./bin/db-clear --reset              # Clear all and reset sequences
+./bin/db-clear --help               # Show all options
 ```
 
 **Windows:**
@@ -405,6 +416,14 @@ bin\db-inspect --conversations    # Show only conversations
 bin\db-inspect --messages         # Show only messages
 bin\db-inspect --counts           # Show only row counts
 bin\db-inspect --help             # Show all options
+
+REM Database clearing (⚠️ WARNING: Deletes data!)
+bin\db-clear                      # Clear all tables with confirmation
+bin\db-clear --confirm            # Clear all tables without confirmation
+bin\db-clear --messages           # Clear only messages table
+bin\db-clear --conversations      # Clear only conversations table
+bin\db-clear --reset              # Clear all and reset sequences
+bin\db-clear --help               # Show all options
 ```
 
 The application validates that the port is between 1 and 65535 and will show an error message for invalid ports. Both the start script and the C++ executable provide helpful error messages and usage information.

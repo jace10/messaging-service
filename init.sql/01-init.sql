@@ -48,16 +48,3 @@ CREATE TRIGGER update_conversations_updated_at
     BEFORE UPDATE ON conversations 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
-
--- Insert some sample data for testing
-INSERT INTO conversations (participant_from, participant_to) VALUES 
-    ('+18045551234', '+12016661234'),
-    ('user@usehatchapp.com', 'contact@gmail.com')
-ON CONFLICT (participant_from, participant_to) DO NOTHING;
-
--- Insert sample messages
-INSERT INTO messages (conversation_id, from_address, to_address, message_type, body, timestamp, direction) VALUES 
-    (1, '+18045551234', '+12016661234', 'sms', 'Hello, this is a test SMS message', '2024-11-01T14:00:00Z', 'outbound'),
-    (1, '+12016661234', '+18045551234', 'sms', 'Hi! Thanks for the message', '2024-11-01T14:05:00Z', 'inbound'),
-    (2, 'user@usehatchapp.com', 'contact@gmail.com', 'email', 'This is a test email message', '2024-11-01T14:10:00Z', 'outbound')
-ON CONFLICT DO NOTHING;

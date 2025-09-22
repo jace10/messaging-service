@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Cross-platform database clearing script
+# Automatically detects the operating system and runs the appropriate script
+
+set -e
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Detect the operating system
+case "$(uname -s)" in
+    Linux*|Darwin*)
+        # Unix-like system (Linux, macOS)
+        exec "$SCRIPT_DIR/unix/db-clear.sh" "$@"
+        ;;
+    CYGWIN*|MINGW*|MSYS*)
+        # Windows with Unix-like environment
+        exec "$SCRIPT_DIR/windows/db-clear.bat" "$@"
+        ;;
+    *)
+        echo "Unsupported operating system: $(uname -s)" >&2
+        echo "Please run the appropriate script directly:" >&2
+        echo "  Unix/Linux/macOS: $SCRIPT_DIR/unix/db-clear.sh" >&2
+        echo "  Windows: $SCRIPT_DIR/windows/db-clear.bat" >&2
+        exit 1
+        ;;
+esac
