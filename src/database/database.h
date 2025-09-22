@@ -21,6 +21,7 @@ public:
     int findOrCreateConversation(const std::string& participant_from, const std::string& participant_to);
     
     // Message operations
+    // Schema in the database is defined in the init.sql file
     bool insertMessage(int conversation_id, 
                       const std::string& from_address,
                       const std::string& to_address,

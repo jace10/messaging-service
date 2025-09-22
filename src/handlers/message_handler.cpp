@@ -1,4 +1,5 @@
 #include "message_handler.h"
+#include "../types/status_codes.h"
 #include <iostream>
 
 void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Response& res) {
@@ -10,7 +11,7 @@ void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Respons
     // Process the message
     // Return appropriate response
     
-    res.status = 200;
+    res.status = toInt(StatusCodeType::OK);
     res.set_content("{\"status\": \"success\", \"message\": \"SMS queued for sending\"}", "application/json");
 }
 
@@ -23,7 +24,7 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
     // Process the email
     // Return appropriate response
     
-    res.status = 200;
+    res.status = toInt(StatusCodeType::OK);
     res.set_content("{\"status\": \"success\", \"message\": \"Email queued for sending\"}", "application/json");
 }
 

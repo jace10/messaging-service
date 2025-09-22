@@ -1,4 +1,5 @@
 #include "conversation_handler.h"
+#include "../types/status_codes.h"
 #include <iostream>
 
 void ConversationHandler::handleGetConversations(const httplib::Request& req, httplib::Response& res) {
@@ -8,7 +9,7 @@ void ConversationHandler::handleGetConversations(const httplib::Request& req, ht
     // Query database for all conversations
     // Return JSON list of conversations
     
-    res.status = 200;
+    res.status = toInt(StatusCodeType::OK);
     res.set_content("{\"conversations\": []}", "application/json");
 }
 
@@ -21,7 +22,7 @@ void ConversationHandler::handleGetMessages(const httplib::Request& req, httplib
     // Query database for messages in the conversation
     // Return JSON list of messages
     
-    res.status = 200;
+    res.status = toInt(StatusCodeType::OK);
     res.set_content("{\"messages\": []}", "application/json");
 }
 
