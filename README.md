@@ -113,16 +113,19 @@ This project structure is laid out for you already. You are welcome to move or c
 │   ├── stop               # Cross-platform stop script wrapper
 │   ├── test               # Cross-platform test script wrapper
 │   ├── check-deps         # Cross-platform dependency checker wrapper
+│   ├── db-inspect         # Cross-platform database inspection script
 │   ├── unix/              # Unix-specific scripts (macOS/Linux)
 │   │   ├── start.sh       # Unix start script
 │   │   ├── stop.sh        # Unix stop script
 │   │   ├── test.sh        # Unix test script
-│   │   └── check-deps.sh  # Unix dependency checker
+│   │   ├── check-deps.sh  # Unix dependency checker
+│   │   └── db-inspect.sh  # Unix database inspection script
 │   └── windows/           # Windows-specific scripts
 │       ├── start.bat      # Windows start script
 │       ├── stop.bat       # Windows stop script
 │       ├── test.bat       # Windows test script
-│       └── check-deps.bat # Windows dependency checker
+│       ├── check-deps.bat # Windows dependency checker
+│       └── db-inspect.bat # Windows database inspection script
 ├── src/                    # C++ source code
 │   ├── main.cpp           # Application entry point
 │   ├── server/            # HTTP server implementation
@@ -370,6 +373,13 @@ make run PORT=3000
 
 # Show help for start script
 ./bin/start --help
+
+# Database inspection
+./bin/db-inspect                    # Show all tables and data
+./bin/db-inspect --conversations    # Show only conversations
+./bin/db-inspect --messages         # Show only messages
+./bin/db-inspect --counts           # Show only row counts
+./bin/db-inspect --help             # Show all options
 ```
 
 **Windows:**
@@ -388,6 +398,13 @@ build\Release\messaging-service.exe 3000
 
 REM Show help for start script
 bin\start --help
+
+REM Database inspection
+bin\db-inspect                    # Show all tables and data
+bin\db-inspect --conversations    # Show only conversations
+bin\db-inspect --messages         # Show only messages
+bin\db-inspect --counts           # Show only row counts
+bin\db-inspect --help             # Show all options
 ```
 
 The application validates that the port is between 1 and 65535 and will show an error message for invalid ports. Both the start script and the C++ executable provide helpful error messages and usage information.
