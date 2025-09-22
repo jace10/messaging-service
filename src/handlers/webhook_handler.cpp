@@ -129,8 +129,17 @@ void WebhookHandler::handleIncomingEmail(const httplib::Request& req, httplib::R
             "inbound"
         );
 
+        if (!success) {
+            res.status = toInt(StatusCodeType::INTERNAL_SERVER_ERROR);
+            res.set_content("{\"status\": \"error\", \"message\": \"Failed to store message\"}", "application/json");
+            return;
+        }
+
+        res.status = toInt(StatusCodeType::OK);
+        res.set_content("{\"status\": \"success\", \"message\": \"Email webhook processed\", \"conversation_id\": " + std::to_string(conversation_id) + "}", "application/json");
+
     } catch (const std::exception& e) {
-        std::cerr << "Error processing SMS webhook: " << e.what() << std::endl;
+        std::cerr << "Error processing Email webhook: " << e.what() << std::endl;
         res.status = toInt(StatusCodeType::INTERNAL_SERVER_ERROR);
         res.set_content("{\"status\": \"error\", \"message\": \"Internal server error\"}", "application/json");
     }
