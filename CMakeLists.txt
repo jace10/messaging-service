@@ -4,9 +4,6 @@ project(messaging-service)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Include directories for cpp-httplib
-include_directories(/opt/homebrew/include)
-
 # Source files
 set(SOURCES
     src/main.cpp
@@ -24,24 +21,37 @@ add_executable(messaging-service ${SOURCES})
 # Find required packages
 find_package(Threads REQUIRED)
 
-# Find PostgreSQL
-find_path(POSTGRESQL_INCLUDE_DIR libpq-fe.h
-    PATHS /opt/homebrew/include/postgresql@14 /opt/homebrew/include /usr/include /usr/local/include
-)
+# Find PostgreSQL - try pkg-config first, then manual search
+find_package(PkgConfig QUIET)
+if(PkgConfig_FOUND)
+    pkg_check_modules(POSTGRESQL libpq)
+    if(POSTGRESQL_FOUND)
+        message(STATUS "Found PostgreSQL via pkg-config")
+        include_directories(${POSTGRESQL_INCLUDE_DIRS})
+        target_link_libraries(messaging-service ${POSTGRESQL_LIBRARIES})
+    endif()
+endif()
 
-find_library(POSTGRESQL_LIBRARY pq
-    PATHS /opt/homebrew/lib/postgresql@14 /opt/homebrew/lib /usr/lib /usr/local/lib
-)
+# If pkg-config didn't work, try manual search
+if(NOT POSTGRESQL_FOUND)
+    find_path(POSTGRESQL_INCLUDE_DIR libpq-fe.h
+        PATHS /opt/homebrew/include/postgresql@14 /opt/homebrew/include /usr/include /usr/local/include /usr/include/postgresql
+    )
 
-if(POSTGRESQL_INCLUDE_DIR AND POSTGRESQL_LIBRARY)
-    message(STATUS "Found PostgreSQL: ${POSTGRESQL_LIBRARY}")
-    include_directories(${POSTGRESQL_INCLUDE_DIR})
-else()
-    message(FATAL_ERROR "PostgreSQL not found")
+    find_library(POSTGRESQL_LIBRARY pq
+        PATHS /opt/homebrew/lib/postgresql@14 /opt/homebrew/lib /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu
+    )
+
+    if(POSTGRESQL_INCLUDE_DIR AND POSTGRESQL_LIBRARY)
+        message(STATUS "Found PostgreSQL: ${POSTGRESQL_LIBRARY}")
+        include_directories(${POSTGRESQL_INCLUDE_DIR})
+        target_link_libraries(messaging-service ${POSTGRESQL_LIBRARY})
+    else()
+        message(FATAL_ERROR "PostgreSQL not found")
+    endif()
 endif()
 
 # Link libraries
 target_link_libraries(messaging-service 
     Threads::Threads
-    ${POSTGRESQL_LIBRARY}
 )
