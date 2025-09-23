@@ -109,11 +109,14 @@ void JsonParser::trim(std::string& str) {
     size_t start = str.find_first_not_of(" \t\n\r");
     if (start != std::string::npos) {
         str = str.substr(start);
-    }
-    
-    // Remove trailing whitespace
-    size_t end = str.find_last_not_of(" \t\n\r");
-    if (end != std::string::npos) {
-        str = str.substr(0, end + 1);
+        
+        // Remove trailing whitespace
+        size_t end = str.find_last_not_of(" \t\n\r");
+        if (end != std::string::npos) {
+            str = str.substr(0, end + 1);
+        }
+    } else {
+        // String contains only whitespace, so clear it
+        str.clear();
     }
 }

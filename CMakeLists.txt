@@ -60,3 +60,30 @@ endif()
 target_link_libraries(messaging-service 
     Threads::Threads
 )
+
+# Unit Tests
+enable_testing()
+
+# Test sources
+set(TEST_SOURCES
+    tests/test_runner.cpp
+    tests/test_json_parser.cpp
+    src/utils/json_parser.cpp
+)
+
+# Create test executable
+add_executable(messaging-service-tests ${TEST_SOURCES})
+
+# Include directories for tests
+target_include_directories(messaging-service-tests PRIVATE 
+    src
+    tests
+)
+
+# Link test executable with required libraries
+target_link_libraries(messaging-service-tests 
+    Threads::Threads
+)
+
+# Add test to CTest
+add_test(NAME messaging-service-tests COMMAND messaging-service-tests)

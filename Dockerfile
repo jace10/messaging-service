@@ -35,6 +35,7 @@ WORKDIR /app
 
 # Copy source code
 COPY src/ ./src/
+COPY tests/ ./tests/
 COPY CMakeLists.txt ./
 
 # Create build directory and build the application

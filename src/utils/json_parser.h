@@ -13,6 +13,12 @@ public:
      */
     static std::map<std::string, std::string> parse(const std::string& json);
     
+    /**
+     * @brief Remove leading and trailing whitespace from string
+     * @param str The string to trim (modified in place)
+     */
+    static void trim(std::string& str);
+    
 private:
     /**
      * @brief Extract a specific value from JSON string by key
@@ -28,10 +34,4 @@ private:
      * @return Unescaped string
      */
     static std::string unescapeJsonString(const std::string& str);
-    
-    /**
-     * @brief Remove leading and trailing whitespace from string
-     * @param str The string to trim (modified in place)
-     */
-    static void trim(std::string& str);
 };
