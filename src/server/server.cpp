@@ -3,7 +3,6 @@
 #include "../handlers/webhook_handler.h"
 #include "../handlers/conversation_handler.h"
 #include <iostream>
-#include <signal.h>
 
 MessagingServer::MessagingServer(int port) : port_(port) {
     //initialize instance

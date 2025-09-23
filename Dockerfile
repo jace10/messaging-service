@@ -3,7 +3,6 @@ FROM ubuntu:22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
-ENV CMAKE_BUILD_TYPE=Release
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -15,7 +14,6 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     postgresql-client \
     curl \
-    nlohmann-json3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install cpp-httplib from source
