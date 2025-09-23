@@ -166,7 +166,6 @@ run_test "Valid SMS send" "200" "curl -X POST '$BASE_URL/api/messages/sms' \
     \"from\": \"+12016661234\",
     \"to\": \"+18045551234\",
     \"type\": \"sms\",
-    \"messaging_provider_id\": \"test_provider_1\",
     \"body\": \"Hello! This is a test SMS message.\",
     \"attachments\": null,
     \"timestamp\": \"2024-11-01T14:00:00Z\"
@@ -180,7 +179,6 @@ run_test "Valid MMS send" "200" "curl -X POST '$BASE_URL/api/messages/sms' \
     \"from\": \"+12016661234\",
     \"to\": \"+18045551234\",
     \"type\": \"mms\",
-    \"messaging_provider_id\": \"test_provider_2\",
     \"body\": \"Hello! This is a test MMS message with attachment.\",
     \"attachments\": [\"https://example.com/image.jpg\"],
     \"timestamp\": \"2024-11-01T14:00:00Z\"
@@ -194,7 +192,6 @@ run_test "Valid Email send" "200" "curl -X POST '$BASE_URL/api/messages/email' \
     \"from\": \"user@usehatchapp.com\",
     \"to\": \"contact@gmail.com\",
     \"type\": \"email\",
-    \"messaging_provider_id\": \"test_provider_3\",
     \"body\": \"Hello! This is a test email message with <b>HTML</b> formatting.\",
     \"attachments\": [\"https://example.com/document.pdf\"],
     \"timestamp\": \"2024-11-01T14:00:00Z\"

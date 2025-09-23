@@ -2,7 +2,11 @@
 #include "../database/database.h"
 #include "../utils/json_parser.h"
 #include "../types/status_codes.h"
+#include "../providers/messaging_provider.h"
 #include <iostream>
+#include <vector>
+
+using namespace messaging_service;
 
 void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Response& res) {
     logRequest("Send SMS", req.body);
@@ -33,6 +37,33 @@ void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Respons
             return;
         }
         
+        // Get the appropriate provider based on message type
+        auto provider = MessagingProviderFactory::getProviderForType(type);
+        if (!provider) {
+            res.status = toInt(StatusCodeType::INTERNAL_SERVER_ERROR);
+            res.set_content("{\"status\": \"error\", \"message\": \"No provider configured for message type: " + type + "\"}", "application/json");
+            return;
+        }
+        
+        std::cout << "[MESSAGE HANDLER] Using provider: " << provider->getProviderName() << " for message type: " << type << std::endl;
+        
+        // Create message request
+        MessageRequest messageRequest(from, to, type, body, provider->getProviderName(), timestamp, "outbound");
+        
+        // Parse attachments if provided
+        if (attachments != "null" && !attachments.empty()) {
+            // Simple parsing - in real implementation, this would be more sophisticated
+            if (attachments.find('[') != std::string::npos) {
+                // Handle JSON array format
+                messageRequest.attachments = {attachments}; // Simplified for now
+            } else {
+                messageRequest.attachments = {attachments};
+            }
+        }
+        
+        // Send message through provider
+        MessageResponse providerResponse = provider->sendMessage(messageRequest);
+        
         // Connect to database
         Database db;
         if (!db.connect()) {
@@ -49,7 +80,7 @@ void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Respons
             return;
         }
         
-        // Store message in database
+        // Store message in database with provider response
         bool success = db.insertMessage(
             conversation_id,
             from,
@@ -57,7 +88,7 @@ void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Respons
             type,
             body,
             attachments,
-            "",
+            providerResponse.provider_message_id,
             timestamp,
             "outbound"
         );
@@ -68,9 +99,14 @@ void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Respons
             return;
         }
         
-        // Return success response
-        res.status = toInt(StatusCodeType::OK);
-        res.set_content("{\"status\": \"success\", \"message\": \"SMS queued for sending\", \"conversation_id\": " + std::to_string(conversation_id) + "}", "application/json");
+        // Return response based on provider result
+        if (providerResponse.success) {
+            res.status = toInt(StatusCodeType::OK);
+            res.set_content("{\"status\": \"success\", \"message\": \"" + providerResponse.message + "\", \"conversation_id\": " + std::to_string(conversation_id) + ", \"provider_message_id\": \"" + providerResponse.provider_message_id + "\"}", "application/json");
+        } else {
+            res.status = providerResponse.http_status_code;
+            res.set_content("{\"status\": \"error\", \"message\": \"" + providerResponse.message + "\", \"error_code\": \"" + providerResponse.error_code + "\"}", "application/json");
+        }
         
     } catch (const std::exception& e) {
         res.status = toInt(StatusCodeType::BAD_REQUEST);
@@ -88,16 +124,54 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
         // Validate required fields
         std::string from = json_data["from"];
         std::string to = json_data["to"];
+        std::string type = json_data["type"];
         std::string body = json_data["body"];
         std::string timestamp = json_data["timestamp"];
+        std::string subject = json_data.count("subject") ? json_data["subject"] : "";
         std::string attachments = json_data.count("attachments") ? json_data["attachments"] : "null";
         
         // Validate required fields
-        if (from.empty() || to.empty() || body.empty() || timestamp.empty()) {
+        if (from.empty() || to.empty() || type.empty() || 
+            body.empty() || timestamp.empty()) {
             res.status = toInt(StatusCodeType::BAD_REQUEST);
             res.set_content("{\"status\": \"error\", \"message\": \"Missing required fields\"}", "application/json");
             return;
         }
+        
+        // Validate message type
+        if (type != "email") {
+            res.status = toInt(StatusCodeType::BAD_REQUEST);
+            res.set_content("{\"status\": \"error\", \"message\": \"Invalid message type\"}", "application/json");
+            return;
+        }
+        
+        // Get the appropriate provider based on message type
+        auto provider = MessagingProviderFactory::getProviderForType(type);
+        if (!provider) {
+            res.status = toInt(StatusCodeType::INTERNAL_SERVER_ERROR);
+            res.set_content("{\"status\": \"error\", \"message\": \"No provider configured for message type: " + type + "\"}", "application/json");
+            return;
+        }
+        
+        std::cout << "[MESSAGE HANDLER] Using provider: " << provider->getProviderName() << " for message type: " << type << std::endl;
+        
+        // Create message request
+        MessageRequest messageRequest(from, to, type, body, provider->getProviderName(), timestamp, "outbound");
+        messageRequest.subject = subject;
+        
+        // Parse attachments if provided
+        if (attachments != "null" && !attachments.empty()) {
+            // Simple parsing - in real implementation, this would be more sophisticated
+            if (attachments.find('[') != std::string::npos) {
+                // Handle JSON array format
+                messageRequest.attachments = {attachments}; // Simplified for now
+            } else {
+                messageRequest.attachments = {attachments};
+            }
+        }
+        
+        // Send message through provider
+        MessageResponse providerResponse = provider->sendMessage(messageRequest);
         
         // Connect to database
         Database db;
@@ -115,15 +189,15 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
             return;
         }
         
-        // Store message in database
+        // Store message in database with provider response
         bool success = db.insertMessage(
             conversation_id,
             from,
             to,
-            "email",
+            type,
             body,
             attachments,
-            "",
+            providerResponse.provider_message_id,
             timestamp,
             "outbound"
         );
@@ -134,9 +208,14 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
             return;
         }
         
-        // Return success response
-        res.status = toInt(StatusCodeType::OK);
-        res.set_content("{\"status\": \"success\", \"message\": \"Email queued for sending\", \"conversation_id\": " + std::to_string(conversation_id) + "}", "application/json");
+        // Return response based on provider result
+        if (providerResponse.success) {
+            res.status = toInt(StatusCodeType::OK);
+            res.set_content("{\"status\": \"success\", \"message\": \"" + providerResponse.message + "\", \"conversation_id\": " + std::to_string(conversation_id) + ", \"provider_message_id\": \"" + providerResponse.provider_message_id + "\"}", "application/json");
+        } else {
+            res.status = providerResponse.http_status_code;
+            res.set_content("{\"status\": \"error\", \"message\": \"" + providerResponse.message + "\", \"error_code\": \"" + providerResponse.error_code + "\"}", "application/json");
+        }
         
     } catch (const std::exception& e) {
         res.status = toInt(StatusCodeType::BAD_REQUEST);
