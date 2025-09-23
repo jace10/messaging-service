@@ -13,7 +13,6 @@ git clone <repository-url>
 cd messaging-service
 ./bin/start       # Build and start using Docker
 ./bin/test        # Run tests
-./bin/db-clear    # Clear the database
 ./bin/db-inspect  # Inspect the database manually to double check expected results
 ./bin/stop        # kills all processes names messaging-service
 ```
@@ -302,6 +301,8 @@ The project includes several commands for easy development:
 - `./bin/start` - Start all services (database + application) using Docker
 - `./bin/stop` - Stop all services
 - `./bin/test` - Run tests
+- `./bin/db-clear` - Nuke the database tables
+- `./bin/db-inspect` - Manually inspect the datbase tables
 - `./bin/start --help` - Show start script help
 
 ### Direct Docker Commands (Alternative)
