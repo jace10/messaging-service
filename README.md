@@ -4,6 +4,42 @@ Jason Mather Implementation
 
 This is a scaffold for Hatch's backend interview project. It includes basic setup for development, testing, and deployment.
 
+## Quick Start
+
+**Recommended Development Approach (Docker):**
+```bash
+# Clone and start
+git clone <repository-url>
+cd messaging-service
+./bin/start       # Build and start using Docker
+./bin/test        # Run tests
+./bin/db-clear    # Clear the database
+./bin/db-inspect  # Inspect the database manually to double check expected results
+./bin/stop        # kills all processes names messaging-service
+```
+
+**After making code changes:**
+```bash
+./bin/stop    # kills all processes names messaging-service
+./bin/start   # Rebuild and restart with Docker
+./bin/test    # Test your changes
+```
+
+**Complete rebuild from scratch:**
+```bash
+# Option 1: Using start script (Recommended)
+./bin/stop
+./bin/start
+
+# Option 2: Manual Docker commands
+docker-compose down -v --remove-orphans
+docker-compose build --no-cache
+docker-compose up -d
+./bin/test
+```
+
+**For detailed instructions, see the [Development](#development) and [Rebuilding from Scratch](#rebuilding-from-scratch) sections below.**
+
 ## Guidelines
 
 At Hatch, we work with several message providers to offer a unified way for our Customers to  communicate to their Contacts. Today we offer SMS, MMS, email, voice calls, and voicemail drops. Your task is to implement an HTTP service that supports the core messaging functionality of Hatch, on a much smaller scale. Specific instructions and guidelines on completing the project are below.
@@ -108,41 +144,11 @@ This project structure is laid out for you already. You are welcome to move or c
 
 ```
 .
-├── bin/                    # Platform-agnostic script wrappers
-│   ├── start              # Cross-platform start script wrapper
-│   ├── stop               # Cross-platform stop script wrapper
-│   ├── test               # Cross-platform test script wrapper
-│   ├── check-deps         # Cross-platform dependency checker wrapper
-│   ├── db-inspect         # Cross-platform database inspection script
-│   ├── db-clear           # Cross-platform database clearing script
-│   ├── unix/              # Unix-specific scripts (macOS/Linux)
-│   │   ├── start.sh       # Unix start script
-│   │   ├── stop.sh        # Unix stop script
-│   │   ├── test.sh        # Unix test script
-│   │   ├── check-deps.sh  # Unix dependency checker
-│   │   ├── db-inspect.sh  # Unix database inspection script
-│   │   └── db-clear.sh    # Unix database clearing script
-│   └── windows/           # Windows-specific scripts
-│       ├── start.bat      # Windows start script
-│       ├── stop.bat       # Windows stop script
-│       ├── test.bat       # Windows test script
-│       ├── check-deps.bat # Windows dependency checker
-│       ├── db-inspect.bat # Windows database inspection script
-│       └── db-clear.bat   # Windows database clearing script
-├── src/                    # C++ source code
-│   ├── main.cpp           # Application entry point
-│   ├── server/            # HTTP server implementation
-│   │   ├── server.h       # Server class definition
-│   │   └── server.cpp     # Server setup and routing
-│   └── handlers/          # Request handlers
-│       ├── message_handler.h/.cpp      # SMS/Email sending endpoints
-│       ├── webhook_handler.h/.cpp      # Incoming webhook endpoints
-│       └── conversation_handler.h/.cpp  # Conversation management endpoints
-├── build/                  # Build directory (created by CMake)
-├── CMakeLists.txt         # CMake build configuration
+├── bin/                    # Scripts and executables
+│   ├── start.sh           # Application startup script
+│   └── test.sh            # API testing script with curl commands
 ├── docker-compose.yml      # PostgreSQL database setup
-├── Makefile               # Build and development commands (Unix)
-├── make.bat               # Build and development commands (Windows)
+├── Makefile               # Build and development commands with docker-compose integration
 └── README.md              # This file
 ```
 
@@ -243,17 +249,23 @@ git clone <repository-url>
 cd messaging-service
 
 # Start everything with one command
-docker-compose up --build
+./bin/start
 
 # Test the service
 curl http://localhost:8080/health
 curl http://localhost:8080/api/conversations
 
 # Stop the services
-docker-compose down
+./bin/stop
 ```
 
-**Docker Commands:**
+**Start Script Commands (Recommended):**
+- `./bin/start` - Start all services (database + application) using Docker
+- `./bin/stop` - Stop all services
+- `./bin/test` - Run tests
+- `./bin/start --help` - Show start script help
+
+**Direct Docker Commands (Alternative):**
 - `docker-compose up --build` - Start all services (database + application)
 - `docker-compose up -d --build` - Start in background
 - `docker-compose down` - Stop all services
@@ -264,25 +276,35 @@ docker-compose down
 
 **macOS/Linux:**
 1. Clone the repository
-2. Run `make setup` to initialize the project and start PostgreSQL
-3. Run `make build` to build the C++ application
-4. Run `make run` to start the application
-5. Run `make test` to run tests
-6. Run `make stop` to stop the application
+2. Run `./bin/start` to start the application using Docker
+3. Run `./bin/test` to run tests
+4. Run `./bin/stop` to stop the application
 
 **Windows:**
 1. Clone the repository
-2. Run `make.bat setup` to initialize the project and start PostgreSQL
-3. Run `make.bat build` to build the C++ application
-4. Run `make.bat run` to start the application
-5. Run `make.bat test` to run tests
-6. Run `make.bat stop` to stop the application
+2. Run `bin\start` to start the application using Docker
+3. Run `bin\test` to run tests
+4. Run `bin\stop` to stop the application
+
+**Alternative (using Make commands):**
+- `make setup` - Initialize the project and start PostgreSQL
+- `make build` - Build the C++ application
+- `make run` - Start the application
+- `make test` - Run tests
+- `make stop` - Stop the application
 
 ## Available Commands
 
 The project includes several commands for easy development:
 
-### Docker Commands (Recommended)
+### Start Script Commands (Recommended)
+
+- `./bin/start` - Start all services (database + application) using Docker
+- `./bin/stop` - Stop all services
+- `./bin/test` - Run tests
+- `./bin/start --help` - Show start script help
+
+### Direct Docker Commands (Alternative)
 
 - `docker-compose up --build` - Start all services (database + application)
 - `docker-compose up -d --build` - Start all services in background
@@ -328,7 +350,18 @@ The project includes several commands for easy development:
 
 ### Docker Development (Recommended)
 
-The easiest way to develop is using Docker containers:
+The easiest way to develop is using Docker containers. **This is the recommended approach** as it requires no local dependencies and ensures consistent builds across different environments.
+
+#### Quick Development Workflow
+
+```bash
+# After making source changes:
+./bin/start   # Builds and starts using Docker (includes all dependencies)
+./bin/test    # Run your tests
+./bin/stop    # Stop when done
+```
+
+#### Detailed Docker Commands
 
 ```bash
 # Start all services
@@ -344,12 +377,70 @@ docker-compose exec postgres psql -U messaging_user -d messaging_service
 docker-compose down
 ```
 
-### Local Development
+#### Development Process After Code Changes
 
-If you prefer local development:
+**Option 1: Using Start Script (Recommended)**
+```bash
+# After making source changes:
+./bin/start   # Builds and starts using Docker
+./bin/test    # Test your changes
+./bin/stop    # Stop when done
+```
+
+**Option 2: Using Make Commands**
+```bash
+# After making source changes:
+make build    # Builds using Docker
+make run      # Starts using Docker
+./bin/test    # Test your changes
+```
+
+**Option 3: Full Rebuild (When you want to ensure clean build)**
+```bash
+# After making source changes:
+docker-compose down
+docker-compose build --no-cache messaging-service
+docker-compose up -d
+./bin/test
+```
+
+### Local Development (Advanced)
+
+**⚠️ Note: Local development requires installing C++ dependencies locally. Docker development is recommended.**
+
+If you prefer local development, you'll need to install all dependencies locally:
+
+#### Prerequisites for Local Development
+
+- **CMake** (version 3.16 or higher)
+- **C++ Compiler** with C++17 support
+- **cpp-httplib** library
+- **PostgreSQL development libraries**
+- **Docker** (for database only)
+
+#### Local Development Workflow
+
+```bash
+# Start PostgreSQL database
+make db-up
+
+# Build locally (requires local dependencies)
+make build
+
+# Run locally
+make run
+
+# Test
+make test
+
+# Stop
+make stop
+```
+
+#### Local Development Commands
 
 - Use `make setup` to start PostgreSQL database and initialize the project
-- Use `make build` to build the C++ application
+- Use `make build` to build the C++ application locally
 - Use `make run` to start the development server (default port 8080)
 - Use `make run PORT=3000` to start on a custom port
 - Use `make test` to run tests
@@ -362,20 +453,21 @@ The messaging service runs on port 8080 by default, but you can specify a custom
 
 **macOS/Linux:**
 ```bash
-# Default port (8080)
-make run
+# Default port (8080) - Recommended
+./bin/start
 
-# Custom port
-make run PORT=3000
-
-# Direct script usage
+# Custom port - Recommended
 ./bin/start 3000
-
-# Direct executable usage
-./build/messaging-service 3000
 
 # Show help for start script
 ./bin/start --help
+
+# Alternative: Using Make commands
+make run              # Default port (8080)
+make run PORT=3000    # Custom port
+
+# Alternative: Direct executable usage
+./build/messaging-service 3000
 
 # Database inspection
 ./bin/db-inspect                    # Show all tables and data
@@ -395,20 +487,21 @@ make run PORT=3000
 
 **Windows:**
 ```cmd
-REM Default port (8080)
-make.bat run
+REM Default port (8080) - Recommended
+bin\start
 
-REM Custom port
-make.bat run PORT=3000
-
-REM Direct script usage
+REM Custom port - Recommended
 bin\start 3000
-
-REM Direct executable usage
-build\Release\messaging-service.exe 3000
 
 REM Show help for start script
 bin\start --help
+
+REM Alternative: Using Make commands
+make.bat run              REM Default port (8080)
+make.bat run PORT=3000    REM Custom port
+
+REM Alternative: Direct executable usage
+build\Release\messaging-service.exe 3000
 
 REM Database inspection
 bin\db-inspect                    # Show all tables and data
@@ -427,6 +520,155 @@ bin\db-clear --help               # Show all options
 ```
 
 The application validates that the port is between 1 and 65535 and will show an error message for invalid ports. Both the start script and the C++ executable provide helpful error messages and usage information.
+
+## Rebuilding from Scratch
+
+Sometimes you need to completely rebuild the project from scratch. This is useful when:
+- You've made significant changes to dependencies
+- You're experiencing build issues
+- You want to ensure a completely clean build
+- You're switching between different development approaches
+
+### Complete Clean Rebuild (Docker)
+
+**Option 1: Using Start Script (Recommended)**
+```bash
+# Simple rebuild using start script
+./bin/stop
+./bin/start
+./bin/test
+```
+
+**Option 2: Manual Docker Commands (Most Thorough)**
+```bash
+# 1. Stop all running containers
+docker-compose down
+
+# 2. Remove all containers, networks, and volumes
+docker-compose down -v --remove-orphans
+
+# 3. Remove the Docker image (optional, forces complete rebuild)
+docker rmi messaging-service-messaging-service:latest
+
+# 4. Remove any local build artifacts
+rm -rf build/
+
+# 5. Rebuild everything from scratch
+docker-compose build --no-cache
+
+# 6. Start the services
+docker-compose up -d
+
+# 7. Verify everything is working
+./bin/test
+```
+
+### Quick Clean Rebuild (Docker)
+
+**Option 1: Using Start Script (Recommended)**
+```bash
+# Simple rebuild using start script
+./bin/stop
+./bin/start
+./bin/test
+```
+
+**Option 2: Manual Docker Commands**
+```bash
+# 1. Stop services
+docker-compose down
+
+# 2. Rebuild without cache
+docker-compose build --no-cache messaging-service
+
+# 3. Start services
+docker-compose up -d
+
+# 4. Test
+./bin/test
+```
+
+### Complete Clean Rebuild (Local Development)
+
+**If you're using local development:**
+
+```bash
+# 1. Stop any running services
+make stop
+
+# 2. Clean build directory
+rm -rf build/
+
+# 3. Clean Docker containers (if using Docker for database)
+docker-compose down -v
+
+# 4. Rebuild everything
+make setup    # Start database
+make build    # Build application
+make run      # Start application
+
+# 5. Test
+make test
+```
+
+### Troubleshooting Build Issues
+
+**If you're experiencing build problems:**
+
+1. **Check Docker is running:**
+   ```bash
+   docker --version
+   docker-compose --version
+   ```
+
+2. **Check available disk space:**
+   ```bash
+   df -h  # Linux/macOS
+   ```
+
+3. **Clear Docker cache:**
+   ```bash
+   docker system prune -a
+   ```
+
+4. **Check for port conflicts:**
+   ```bash
+   lsof -i :8080  # Check if port 8080 is in use
+   ```
+
+5. **Verify database is healthy:**
+   ```bash
+   docker-compose logs postgres
+   ```
+
+6. **Check application logs:**
+   ```bash
+   docker-compose logs messaging-service
+   ```
+
+### Development Environment Reset
+
+**Option 1: Using Start Script (Recommended)**
+```bash
+# Simple reset using start script
+./bin/stop
+./bin/start
+```
+
+**Option 2: Complete Reset (Manual)**
+```bash
+# 1. Stop everything
+docker-compose down -v --remove-orphans
+
+# 2. Remove all Docker images and containers
+docker system prune -a
+
+# 3. Remove local build artifacts
+rm -rf build/
+
+# 4. Start fresh
+docker-compose up --build
+```
 
 ## Database
 
