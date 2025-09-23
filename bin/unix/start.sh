@@ -46,20 +46,12 @@ if [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
     exit 1
 fi
 
-echo "Starting the messaging service on port $PORT..."
+echo "Starting the messaging service using Docker..."
 echo "Environment: ${ENV:-development}"
 
-# Create build directory if it doesn't exist
-mkdir -p build
+# Build and start the application using Docker
+echo "Building and starting messaging service with Docker..."
+docker-compose up -d
 
-# Build the C++ application
-echo "Building C++ application..."
-cd build
-cmake ..
-make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
-cd ..
-
-# Start the application
-echo "Starting messaging service on port $PORT..."
-echo "PID: $$" > messaging-service.pid
-exec ./build/messaging-service $PORT 
+echo "Messaging service is running at http://localhost:8080"
+echo "Use './bin/stop' to stop the service" 

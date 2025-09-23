@@ -25,13 +25,14 @@ setup:
 	@echo "Setup complete!"
 
 build:
-	@echo "Building C++ application..."
-	@mkdir -p build
-	@cd build && cmake .. && make -j$$(nproc 2>/dev/null || sysctl -n hw.ncpu)
+	@echo "Building C++ application using Docker..."
+	@docker-compose build messaging-service
+	@echo "Build complete!"
 
 run:
-	@echo "Running the application..."
-	@./bin/start $(PORT)
+	@echo "Starting the application using Docker..."
+	@docker-compose up -d
+	@echo "Application is running at http://localhost:8080"
 
 stop:
 	@echo "Stopping the application..."

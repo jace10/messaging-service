@@ -51,23 +51,15 @@ if %PORT% gtr 65535 (
     exit /b 1
 )
 
-echo Starting the messaging service on port %PORT%...
+echo Starting the messaging service using Docker...
 echo Environment: %ENV%
 if "%ENV%"=="" echo Environment: development
 
-REM Create build directory if it doesn't exist
-if not exist build mkdir build
+REM Build and start the application using Docker
+echo Building and starting messaging service with Docker...
+docker-compose up -d
 
-REM Build the C++ application
-echo Building C++ application...
-cd build
-cmake ..
-cmake --build . --config Release
-cd ..
-
-REM Start the application
-echo Starting messaging service on port %PORT%...
-echo PID: %CD% > messaging-service.pid
-start /b .\build\Release\messaging-service.exe %PORT%
+echo Messaging service is running at http://localhost:8080
+echo Use 'bin\stop' to stop the service
 
 endlocal
