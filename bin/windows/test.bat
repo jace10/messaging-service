@@ -3,6 +3,31 @@ setlocal enabledelayedexpansion
 
 REM Enhanced test script for messaging service endpoints (Windows version)
 REM This script tests the local messaging service with comprehensive field validation
+REM Usage: test.bat [test_number]
+REM   test_number: Optional parameter to run a specific test (1-20)
+
+REM Parse command line arguments
+set "SPECIFIC_TEST="
+if "%~1" neq "" (
+    set "SPECIFIC_TEST=%~1"
+    REM Basic validation that parameter is a number between 1-20
+    echo %SPECIFIC_TEST% | findstr /r "^[0-9][0-9]*$" >nul
+    if errorlevel 1 (
+        echo Error: Test number must be between 1 and 20
+        echo Usage: %~nx0 [test_number]
+        exit /b 1
+    )
+    if %SPECIFIC_TEST% lss 1 (
+        echo Error: Test number must be between 1 and 20
+        echo Usage: %~nx0 [test_number]
+        exit /b 1
+    )
+    if %SPECIFIC_TEST% gtr 20 (
+        echo Error: Test number must be between 1 and 20
+        echo Usage: %~nx0 [test_number]
+        exit /b 1
+    )
+)
 
 REM Colors are not easily supported in Windows batch, so we'll use text indicators
 set "PASS_MARK=✅"
@@ -23,6 +48,11 @@ set "expected_status=%~2"
 set "curl_command=%~3"
 
 set /a TEST_COUNT+=1
+
+REM Skip this test if we're running a specific test and this isn't it
+if not "!SPECIFIC_TEST!"=="" (
+    if not !TEST_COUNT!==!SPECIFIC_TEST! goto :eof
+)
 
 echo Test !TEST_COUNT!: !test_name!
 
@@ -63,6 +93,7 @@ goto :eof
 
 echo === Enhanced Messaging Service Test Suite ===
 echo Base URL: %BASE_URL%
+if not "%SPECIFIC_TEST%"=="" echo Running specific test: %SPECIFIC_TEST%
 echo.
 
 REM Check if service is running
@@ -72,8 +103,15 @@ echo 📋 Running Comprehensive Field Validation Tests
 echo.
 
 REM === VALID TESTS ===
-echo ✅ VALID TESTS
-echo ==============
+if "%SPECIFIC_TEST%"=="" (
+    echo ✅ VALID TESTS
+    echo ==============
+) else (
+    if %SPECIFIC_TEST% leq 8 (
+        echo ✅ VALID TESTS
+        echo ==============
+    )
+)
 
 REM Test 1: Valid SMS send
 call :run_test "Valid SMS send" "200" "curl -X POST \"%BASE_URL%/api/messages/sms\" -H \"%CONTENT_TYPE%\" -d \"{\\\"from\\\": \\\"+12016661234\\\", \\\"to\\\": \\\"+18045551234\\\", \\\"type\\\": \\\"sms\\\", \\\"body\\\": \\\"Hello! This is a test SMS message.\\\", \\\"attachments\\\": null, \\\"timestamp\\\": \\\"2024-11-01T14:00:00Z\\\"}\" -w \"\nStatus: %%{http_code}\""
@@ -100,8 +138,15 @@ REM Test 8: Get messages for conversation
 call :run_test "Get messages for conversation" "200" "curl -X GET \"%BASE_URL%/api/conversations/1/messages\" -H \"%CONTENT_TYPE%\" -w \"\nStatus: %%{http_code}\""
 
 echo.
-echo ❌ INVALID FIELD TESTS
-echo =====================
+if "%SPECIFIC_TEST%"=="" (
+    echo ❌ INVALID FIELD TESTS
+    echo =====================
+) else (
+    if %SPECIFIC_TEST% geq 9 (
+        echo ❌ INVALID FIELD TESTS
+        echo =====================
+    )
+)
 
 REM === INVALID FIELD TESTS ===
 
@@ -143,16 +188,30 @@ call :run_test "Get messages for non-existent conversation" "200" "curl -X GET \
 
 echo.
 echo === TEST RESULTS SUMMARY ===
-echo Total Tests: !TEST_COUNT!
-echo Passed: !PASSED_COUNT!
-echo Failed: !FAILED_COUNT!
+if not "%SPECIFIC_TEST%"=="" (
+    echo Running specific test: %SPECIFIC_TEST%
+    echo Passed: !PASSED_COUNT!
+    echo Failed: !FAILED_COUNT!
+) else (
+    echo Total Tests: !TEST_COUNT!
+    echo Passed: !PASSED_COUNT!
+    echo Failed: !FAILED_COUNT!
+)
 echo.
 
 REM Overall result
 if !FAILED_COUNT! equ 0 (
-    echo ✅ ALL TESTS PASSED! 🎉
+    if not "%SPECIFIC_TEST%"=="" (
+        echo ✅ TEST %SPECIFIC_TEST% PASSED! 🎉
+    ) else (
+        echo ✅ ALL TESTS PASSED! 🎉
+    )
     exit /b 0
 ) else (
-    echo ❌ SOME TESTS FAILED! 😞
+    if not "%SPECIFIC_TEST%"=="" (
+        echo ❌ TEST %SPECIFIC_TEST% FAILED! 😞
+    ) else (
+        echo ❌ SOME TESTS FAILED! 😞
+    )
     exit /b 1
 )

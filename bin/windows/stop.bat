@@ -3,29 +3,39 @@ setlocal
 
 echo Stopping the messaging service...
 
-REM Check if PID file exists
-if exist messaging-service.pid (
-    echo Found PID file
-    REM On Windows, we'll use taskkill to stop the process
+REM Find and kill ALL messaging-service processes
+echo Searching for messaging-service processes...
+
+REM Try graceful shutdown first
+taskkill /im messaging-service.exe >nul 2>&1
+if %errorlevel% equ 0 (
+    echo Found messaging-service processes, attempting graceful shutdown...
+    timeout /t 2 /nobreak >nul
+    
+    REM Check if processes are still running and force kill if needed
     taskkill /f /im messaging-service.exe >nul 2>&1
     if %errorlevel% equ 0 (
-        echo Messaging service stopped.
+        echo Some processes still running, force killing...
+        timeout /t 1 /nobreak >nul
+        
+        REM Final check
+        taskkill /f /im messaging-service.exe >nul 2>&1
+        if %errorlevel% equ 0 (
+            echo Warning: Some processes may still be running
+        ) else (
+            echo All messaging-service processes stopped.
+        )
     ) else (
-        echo No messaging-service process found.
+        echo All messaging-service processes stopped gracefully.
     )
-    
-    REM Clean up PID file
-    del messaging-service.pid
 ) else (
-    echo No PID file found. Attempting to find and stop messaging-service process...
-    
-    REM Find and kill any running messaging-service processes
-    taskkill /f /im messaging-service.exe >nul 2>&1
-    if %errorlevel% equ 0 (
-        echo Messaging service stopped.
-    ) else (
-        echo No messaging-service processes found.
-    )
+    echo No messaging-service processes found.
+)
+
+REM Clean up PID file if it exists
+if exist messaging-service.pid (
+    echo Removing PID file...
+    del messaging-service.pid
 )
 
 echo Cleanup complete.

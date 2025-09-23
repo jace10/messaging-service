@@ -20,6 +20,14 @@ void WebhookHandler::handleIncomingSms(const httplib::Request& req, httplib::Res
         std::string body = json_data["body"];
         std::string timestamp = json_data["timestamp"];
         std::string attachments = json_data.count("attachments") ? json_data["attachments"] : "null";
+
+        std::cout << "from: " << from << std::endl;
+        std::cout << "to: " << to << std::endl;
+        std::cout << "type: " << type << std::endl;
+        std::cout << "messaging_provider_id: " << messaging_provider_id << std::endl;
+        std::cout << "body: " << body << std::endl;
+        std::cout << "timestamp: " << timestamp << std::endl;
+        std::cout << "attachments: " << attachments << std::endl;
         
         if (from.empty() || to.empty() || type.empty() || messaging_provider_id.empty() || 
             body.empty() || timestamp.empty()) {

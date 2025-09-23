@@ -15,12 +15,12 @@ Use the wrapper scripts in the root directory - they automatically detect your p
 
 ```bash
 # Unix (macOS/Linux)
-./bin/start --help
 ./bin/check-deps
+./bin/start --help
 
 # Windows
-bin\start --help
 bin\check-deps
+bin\start --help
 ```
 
 ### Platform-Specific
@@ -28,12 +28,12 @@ You can also call the platform-specific scripts directly:
 
 ```bash
 # Unix
-./bin/unix/start.sh --help
 ./bin/unix/check-deps.sh
+./bin/unix/start.sh --help
 
 # Windows
-bin\windows\start.bat --help
 bin\windows\check-deps.bat
+bin\windows\start.bat --help
 ```
 
 ## Scripts

@@ -2,8 +2,22 @@
 
 # Enhanced test script for messaging service endpoints
 # This script tests the local messaging service with comprehensive field validation
+# Usage: ./test.sh [test_number]
+#   test_number: Optional parameter to run a specific test (1-20)
 
 set -e
+
+# Parse command line arguments
+SPECIFIC_TEST=""
+if [ $# -eq 1 ]; then
+    SPECIFIC_TEST="$1"
+    # Validate that the parameter is a number between 1-20
+    if ! [[ "$SPECIFIC_TEST" =~ ^[0-9]+$ ]] || [ "$SPECIFIC_TEST" -lt 1 ] || [ "$SPECIFIC_TEST" -gt 20 ]; then
+        echo "Error: Test number must be between 1 and 20"
+        echo "Usage: $0 [test_number]"
+        exit 1
+    fi
+fi
 
 # Colors for output
 RED='\033[0;31m'
@@ -28,6 +42,11 @@ run_test() {
     local curl_command="$3"
     
     TEST_COUNT=$((TEST_COUNT + 1))
+    
+    # Skip this test if we're running a specific test and this isn't it
+    if [ -n "$SPECIFIC_TEST" ] && [ "$TEST_COUNT" -ne "$SPECIFIC_TEST" ]; then
+        return 0
+    fi
     
     echo -e "${BLUE}Test $TEST_COUNT: $test_name${NC}"
     
@@ -68,6 +87,9 @@ check_service() {
 
 echo -e "${PURPLE}=== Enhanced Messaging Service Test Suite ===${NC}"
 echo -e "${PURPLE}Base URL: $BASE_URL${NC}"
+if [ -n "$SPECIFIC_TEST" ]; then
+    echo -e "${PURPLE}Running specific test: $SPECIFIC_TEST${NC}"
+fi
 echo
 
 # Check if service is running
@@ -77,8 +99,10 @@ echo -e "${CYAN}📋 Running Comprehensive Field Validation Tests${NC}"
 echo
 
 # === VALID TESTS ===
-echo -e "${GREEN}✅ VALID TESTS${NC}"
-echo -e "${GREEN}==============${NC}"
+if [ -z "$SPECIFIC_TEST" ] || [ "$SPECIFIC_TEST" -le 8 ]; then
+    echo -e "${GREEN}✅ VALID TESTS${NC}"
+    echo -e "${GREEN}==============${NC}"
+fi
 
 # Test 1: Valid SMS send
 run_test "Valid SMS send" "200" "curl -X POST '$BASE_URL/api/messages/sms' \
@@ -170,8 +194,10 @@ run_test "Get messages for conversation" "200" "curl -X GET '$BASE_URL/api/conve
   -w '\nStatus: %{http_code}'"
 
 echo
-echo -e "${RED}❌ INVALID FIELD TESTS${NC}"
-echo -e "${RED}=====================${NC}"
+if [ -z "$SPECIFIC_TEST" ] || [ "$SPECIFIC_TEST" -ge 9 ]; then
+    echo -e "${RED}❌ INVALID FIELD TESTS${NC}"
+    echo -e "${RED}=====================${NC}"
+fi
 
 # === INVALID FIELD TESTS ===
 
@@ -318,16 +344,30 @@ run_test "Get messages for non-existent conversation" "200" "curl -X GET '$BASE_
 
 echo
 echo -e "${PURPLE}=== TEST RESULTS SUMMARY ===${NC}"
-echo -e "${PURPLE}Total Tests: $TEST_COUNT${NC}"
-echo -e "${GREEN}Passed: $PASSED_COUNT${NC}"
-echo -e "${RED}Failed: $FAILED_COUNT${NC}"
+if [ -n "$SPECIFIC_TEST" ]; then
+    echo -e "${PURPLE}Running specific test: $SPECIFIC_TEST${NC}"
+    echo -e "${GREEN}Passed: $PASSED_COUNT${NC}"
+    echo -e "${RED}Failed: $FAILED_COUNT${NC}"
+else
+    echo -e "${PURPLE}Total Tests: $TEST_COUNT${NC}"
+    echo -e "${GREEN}Passed: $PASSED_COUNT${NC}"
+    echo -e "${RED}Failed: $FAILED_COUNT${NC}"
+fi
 echo
 
 # Overall result
 if [ $FAILED_COUNT -eq 0 ]; then
-    echo -e "${GREEN}✅ ALL TESTS PASSED! 🎉${NC}"
+    if [ -n "$SPECIFIC_TEST" ]; then
+        echo -e "${GREEN}✅ TEST $SPECIFIC_TEST PASSED! 🎉${NC}"
+    else
+        echo -e "${GREEN}✅ ALL TESTS PASSED! 🎉${NC}"
+    fi
     exit 0
 else
-    echo -e "${RED}❌ SOME TESTS FAILED! 😞${NC}"
+    if [ -n "$SPECIFIC_TEST" ]; then
+        echo -e "${RED}❌ TEST $SPECIFIC_TEST FAILED! 😞${NC}"
+    else
+        echo -e "${RED}❌ SOME TESTS FAILED! 😞${NC}"
+    fi
     exit 1
 fi 
