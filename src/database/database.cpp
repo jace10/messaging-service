@@ -30,7 +30,7 @@ int Database::findOrCreateConversation(const std::string& participant_from, cons
     }
     
     // First, try to find existing conversation
-    std::string select_query = "SELECT id FROM conversations WHERE participant_from = $1 AND participant_to = $2";
+    std::string select_query = "SELECT id FROM conversations WHERE (participant_from = $1 AND participant_to = $2) OR (participant_from = $2 AND participant_to = $1)";
     const char* param_values[] = {participant_from.c_str(), participant_to.c_str()};
     int param_lengths[] = {static_cast<int>(participant_from.length()), static_cast<int>(participant_to.length())};
     int param_formats[] = {0, 0}; // text format
