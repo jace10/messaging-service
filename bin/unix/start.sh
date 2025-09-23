@@ -51,7 +51,7 @@ echo "Environment: ${ENV:-development}"
 
 # Build and start the application using Docker
 echo "Building and starting messaging service with Docker..."
-docker-compose up -d
+docker-compose up --build -d
 
 echo "Messaging service is running at http://localhost:8080"
 echo "Use './bin/stop' to stop the service" 

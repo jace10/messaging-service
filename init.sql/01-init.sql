@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS messages (
     body TEXT NOT NULL,
     attachments JSONB DEFAULT '[]'::jsonb,
     messaging_provider_id VARCHAR(255),
-    xillio_id VARCHAR(255),
     timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     direction VARCHAR(10) NOT NULL CHECK (direction IN ('inbound', 'outbound'))

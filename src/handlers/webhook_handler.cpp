@@ -21,7 +21,6 @@ void WebhookHandler::handleIncomingSms(const httplib::Request& req, httplib::Res
         std::string timestamp = json_data["timestamp"];
         std::string attachments = json_data.count("attachments") ? json_data["attachments"] : "null";
 
-        
         if (from.empty() || to.empty() || type.empty() || messaging_provider_id.empty() || 
             body.empty() || timestamp.empty()) {
             res.status = toInt(StatusCodeType::BAD_REQUEST);

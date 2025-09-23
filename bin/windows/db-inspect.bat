@@ -160,7 +160,7 @@ REM Show messages data
 if "%SHOW_MESSAGES%"=="true" (
     echo 📨 Recent Messages (Last 20)
     echo =============================
-    psql -h %DB_HOST% -p %DB_PORT% -U %DB_USER% -d %DB_NAME% -c "SELECT m.id, m.conversation_id, m.from_address, m.to_address, m.message_type, LEFT(m.body, 50) || CASE WHEN LENGTH(m.body) > 50 THEN '...' ELSE '' END as body_preview, m.messaging_provider_id, m.xillio_id, m.timestamp, m.direction, m.created_at FROM messages m ORDER BY m.timestamp DESC LIMIT 20;"
+    psql -h %DB_HOST% -p %DB_PORT% -U %DB_USER% -d %DB_NAME% -c "SELECT m.id, m.conversation_id, m.from_address, m.to_address, m.message_type, m.body, m.messaging_provider_id, m.timestamp, m.direction, m.created_at FROM messages m ORDER BY m.timestamp DESC LIMIT 20;"
     echo.
 )
 

@@ -15,14 +15,12 @@ void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Respons
         std::string from = json_data["from"];
         std::string to = json_data["to"];
         std::string type = json_data["type"];
-        std::string messaging_provider_id = json_data["messaging_provider_id"];
         std::string body = json_data["body"];
-        std::string timestamp = json_data["timestamp"];
         std::string attachments = json_data.count("attachments") ? json_data["attachments"] : "null";
+        std::string timestamp = json_data["timestamp"];
         
         // Validate required fields
-        if (from.empty() || to.empty() || type.empty() || messaging_provider_id.empty() || 
-            body.empty() || timestamp.empty()) {
+        if (from.empty() || to.empty() || type.empty() || body.empty() || timestamp.empty()) {
             res.status = toInt(StatusCodeType::BAD_REQUEST);
             res.set_content("{\"status\": \"error\", \"message\": \"Missing required fields\"}", "application/json");
             return;
@@ -59,7 +57,7 @@ void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Respons
             type,
             body,
             attachments,
-            messaging_provider_id,
+            "",
             timestamp,
             "outbound"
         );
@@ -90,25 +88,14 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
         // Validate required fields
         std::string from = json_data["from"];
         std::string to = json_data["to"];
-        std::string type = json_data["type"];
-        std::string messaging_provider_id = json_data["messaging_provider_id"];
         std::string body = json_data["body"];
         std::string timestamp = json_data["timestamp"];
-        std::string subject = json_data.count("subject") ? json_data["subject"] : "";
         std::string attachments = json_data.count("attachments") ? json_data["attachments"] : "null";
         
         // Validate required fields
-        if (from.empty() || to.empty() || type.empty() || messaging_provider_id.empty() || 
-            body.empty() || timestamp.empty()) {
+        if (from.empty() || to.empty() || body.empty() || timestamp.empty()) {
             res.status = toInt(StatusCodeType::BAD_REQUEST);
             res.set_content("{\"status\": \"error\", \"message\": \"Missing required fields\"}", "application/json");
-            return;
-        }
-        
-        // Validate message type
-        if (type != "email") {
-            res.status = toInt(StatusCodeType::BAD_REQUEST);
-            res.set_content("{\"status\": \"error\", \"message\": \"Invalid message type\"}", "application/json");
             return;
         }
         
@@ -133,10 +120,10 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
             conversation_id,
             from,
             to,
-            type,
+            "email",
             body,
             attachments,
-            messaging_provider_id,
+            "",
             timestamp,
             "outbound"
         );

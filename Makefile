@@ -31,7 +31,7 @@ build:
 
 run:
 	@echo "Starting the application using Docker..."
-	@docker-compose up -d
+	@docker-compose up --build -d
 	@echo "Application is running at http://localhost:8080"
 
 stop:

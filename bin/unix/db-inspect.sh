@@ -201,9 +201,8 @@ if [ "$SHOW_MESSAGES" = true ]; then
             m.from_address,
             m.to_address,
             m.message_type,
-            LEFT(m.body, 50) || CASE WHEN LENGTH(m.body) > 50 THEN '...' ELSE '' END as body_preview,
+            m.body,
             m.messaging_provider_id,
-            m.xillio_id,
             m.timestamp,
             m.direction,
             m.created_at
