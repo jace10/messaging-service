@@ -394,7 +394,7 @@ run_test "SMS data sent to email endpoint" "400" "curl -X POST '$BASE_URL/api/we
   -w '\nStatus: %{http_code}'"
 
 # Test 20: Non-existent conversation ID
-run_test "Get messages for non-existent conversation" "200" "curl -X GET '$BASE_URL/api/conversations/99999/messages' \
+run_test "Get messages for non-existent conversation" "404" "curl -X GET '$BASE_URL/api/conversations/99999/messages' \
   -H '$CONTENT_TYPE' \
   -w '\nStatus: %{http_code}'"
 

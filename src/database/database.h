@@ -19,6 +19,9 @@ public:
     
     // Conversation operations
     int findOrCreateConversation(const std::string& participant_from, const std::string& participant_to);
+    std::string getAllConversations();
+    bool conversationExists(int conversation_id);
+    std::string getMessagesForConversation(int conversation_id);
     
     // Message operations
     // Schema in the database is defined in the init.sql file

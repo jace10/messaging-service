@@ -54,6 +54,134 @@ int Database::findOrCreateConversation(const std::string& participant_from, cons
     return -1;
 }
 
+std::string Database::getAllConversations() {
+    if (!isConnected()) {
+        std::cerr << "Database not connected" << std::endl;
+        return "{\"conversations\": [], \"error\": \"Database not connected\"}";
+    }
+    
+    std::string select_query = "SELECT id, participant_from, participant_to, created_at, updated_at FROM conversations ORDER BY created_at DESC";
+    
+    auto result = std::unique_ptr<PGresult, decltype(&PQclear)>(PQexec(connection_.get(), select_query.c_str()), PQclear);
+    
+    if (PQresultStatus(result.get()) != PGRES_TUPLES_OK) {
+        std::cerr << "Failed to query conversations: " << PQerrorMessage(connection_.get()) << std::endl;
+        return "{\"conversations\": [], \"error\": \"Database query failed\"}";
+    }
+    
+    int num_rows = PQntuples(result.get());
+    std::string json_response = "{\"conversations\": [";
+    
+    for (int i = 0; i < num_rows; ++i) {
+        if (i > 0) {
+            json_response += ",";
+        }
+        
+        std::string id = PQgetvalue(result.get(), i, 0);
+        std::string participant_from = PQgetvalue(result.get(), i, 1);
+        std::string participant_to = PQgetvalue(result.get(), i, 2);
+        std::string created_at = PQgetvalue(result.get(), i, 3);
+        std::string updated_at = PQgetvalue(result.get(), i, 4);
+        
+        json_response += "{";
+        json_response += "\"id\":" + id + ",";
+        json_response += "\"participant_from\":\"" + participant_from + "\",";
+        json_response += "\"participant_to\":\"" + participant_to + "\",";
+        json_response += "\"created_at\":\"" + created_at + "\",";
+        json_response += "\"updated_at\":\"" + updated_at + "\"";
+        json_response += "}";
+    }
+    
+    json_response += "]}";
+    return json_response;
+}
+
+bool Database::conversationExists(int conversation_id) {
+    if (!isConnected()) {
+        std::cerr << "Database not connected" << std::endl;
+        return false;
+    }
+    
+    std::string select_query = "SELECT id FROM conversations WHERE id = $1";
+    std::string conversation_id_str = std::to_string(conversation_id);
+    const char* param_values[] = {conversation_id_str.c_str()};
+    int param_lengths[] = {static_cast<int>(conversation_id_str.length())};
+    int param_formats[] = {0}; // text format
+    
+    auto result = std::unique_ptr<PGresult, decltype(&PQclear)>(PQexecParams(connection_.get(), select_query.c_str(), 1, nullptr, param_values, param_lengths, param_formats, 0), PQclear);
+    
+    if (PQresultStatus(result.get()) == PGRES_TUPLES_OK && PQntuples(result.get()) > 0) {
+        return true;
+    }
+    
+    return false;
+}
+
+std::string Database::getMessagesForConversation(int conversation_id) {
+    if (!isConnected()) {
+        std::cerr << "Database not connected" << std::endl;
+        return "{\"messages\": [], \"error\": \"Database not connected\"}";
+    }
+    
+    std::string select_query = R"(
+        SELECT id, conversation_id, from_address, to_address, message_type, body, 
+               attachments, messaging_provider_id, timestamp, created_at, direction
+        FROM messages 
+        WHERE conversation_id = $1 
+        ORDER BY timestamp ASC
+    )";
+    
+    std::string conversation_id_str = std::to_string(conversation_id);
+    const char* param_values[] = {conversation_id_str.c_str()};
+    int param_lengths[] = {static_cast<int>(conversation_id_str.length())};
+    int param_formats[] = {0}; // text format
+    
+    auto result = std::unique_ptr<PGresult, decltype(&PQclear)>(PQexecParams(connection_.get(), select_query.c_str(), 1, nullptr, param_values, param_lengths, param_formats, 0), PQclear);
+    
+    if (PQresultStatus(result.get()) != PGRES_TUPLES_OK) {
+        std::cerr << "Failed to query messages: " << PQerrorMessage(connection_.get()) << std::endl;
+        return "{\"messages\": [], \"error\": \"Database query failed\"}";
+    }
+    
+    int num_rows = PQntuples(result.get());
+    std::string json_response = "{\"messages\": [";
+    
+    for (int i = 0; i < num_rows; ++i) {
+        if (i > 0) {
+            json_response += ",";
+        }
+        
+        std::string id = PQgetvalue(result.get(), i, 0);
+        std::string conversation_id_db = PQgetvalue(result.get(), i, 1);
+        std::string from_address = PQgetvalue(result.get(), i, 2);
+        std::string to_address = PQgetvalue(result.get(), i, 3);
+        std::string message_type = PQgetvalue(result.get(), i, 4);
+        std::string body = PQgetvalue(result.get(), i, 5);
+        std::string attachments = PQgetvalue(result.get(), i, 6);
+        std::string messaging_provider_id = PQgetvalue(result.get(), i, 7);
+        std::string timestamp = PQgetvalue(result.get(), i, 8);
+        std::string created_at = PQgetvalue(result.get(), i, 9);
+        std::string direction = PQgetvalue(result.get(), i, 10);
+        
+        json_response += "{";
+        json_response += "\"id\":" + id + ",";
+        json_response += "\"conversation_id\":" + conversation_id_db + ",";
+        json_response += "\"from_address\":\"" + from_address + "\",";
+        json_response += "\"to_address\":\"" + to_address + "\",";
+        json_response += "\"message_type\":\"" + message_type + "\",";
+        json_response += "\"body\":\"" + body + "\",";
+        json_response += "\"attachments\":" + attachments + ",";
+        json_response += "\"messaging_provider_id\":\"" + messaging_provider_id + "\",";
+        json_response += "\"timestamp\":\"" + timestamp + "\",";
+        json_response += "\"created_at\":\"" + created_at + "\",";
+        json_response += "\"direction\":\"" + direction + "\"";
+        json_response += "}";
+    }
+    
+    json_response += "]}";
+    return json_response;
+}
+
 bool Database::insertMessage(int conversation_id, 
                            const std::string& from_address,
                            const std::string& to_address,
