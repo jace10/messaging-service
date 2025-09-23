@@ -40,6 +40,7 @@ run_test() {
     local test_name="$1"
     local expected_status="$2"
     local curl_command="$3"
+    local should_create_message="${4:-false}"
     
     TEST_COUNT=$((TEST_COUNT + 1))
     
@@ -49,6 +50,9 @@ run_test() {
     fi
     
     echo -e "${BLUE}Test $TEST_COUNT: $test_name${NC}"
+    
+    # Get current message count before test
+    local initial_count=$(get_message_count)
     
     # Run the curl command and capture the HTTP status code
     local response
@@ -63,7 +67,18 @@ run_test() {
     # Check if the status code matches expected
     if [ "$http_status" = "$expected_status" ]; then
         echo -e "${GREEN}✅ PASS${NC} - Expected status $expected_status, got $http_status"
-        PASSED_COUNT=$((PASSED_COUNT + 1))
+        
+        # If this test should create a message and was successful, verify database
+        if [ "$should_create_message" = "true" ] && [ "$expected_status" = "200" ]; then
+            local expected_count=$((initial_count + 1))
+            if verify_message_count "$expected_count"; then
+                PASSED_COUNT=$((PASSED_COUNT + 1))
+            else
+                FAILED_COUNT=$((FAILED_COUNT + 1))
+            fi
+        else
+            PASSED_COUNT=$((PASSED_COUNT + 1))
+        fi
     else
         echo -e "${RED}❌ FAIL${NC} - Expected status $expected_status, got $http_status"
         FAILED_COUNT=$((FAILED_COUNT + 1))
@@ -85,6 +100,43 @@ check_service() {
     fi
 }
 
+# Function to clear the database
+clear_database() {
+    echo -e "${YELLOW}🗑️  Clearing database...${NC}"
+    
+    # Clear messages table
+    docker exec messaging-service-db psql -U messaging_user -d messaging_service -c "DELETE FROM messages;" >/dev/null 2>&1
+    
+    # Clear conversations table
+    docker exec messaging-service-db psql -U messaging_user -d messaging_service -c "DELETE FROM conversations;" >/dev/null 2>&1
+    
+    # Reset sequences
+    docker exec messaging-service-db psql -U messaging_user -d messaging_service -c "ALTER SEQUENCE conversations_id_seq RESTART WITH 1;" >/dev/null 2>&1
+    docker exec messaging-service-db psql -U messaging_user -d messaging_service -c "ALTER SEQUENCE messages_id_seq RESTART WITH 1;" >/dev/null 2>&1
+    
+    echo -e "${GREEN}✅ Database cleared${NC}"
+    echo
+}
+
+# Function to get message count from database
+get_message_count() {
+    docker exec messaging-service-db psql -U messaging_user -d messaging_service -t -c "SELECT COUNT(*) FROM messages;" 2>/dev/null | tr -d ' \n'
+}
+
+# Function to verify message count increment
+verify_message_count() {
+    local expected_count="$1"
+    local actual_count=$(get_message_count)
+    
+    if [ "$actual_count" = "$expected_count" ]; then
+        echo -e "${GREEN}✅ Database verification: $actual_count messages (expected: $expected_count)${NC}"
+        return 0
+    else
+        echo -e "${RED}❌ Database verification failed: $actual_count messages (expected: $expected_count)${NC}"
+        return 1
+    fi
+}
+
 echo -e "${PURPLE}=== Enhanced Messaging Service Test Suite ===${NC}"
 echo -e "${PURPLE}Base URL: $BASE_URL${NC}"
 if [ -n "$SPECIFIC_TEST" ]; then
@@ -94,6 +146,9 @@ echo
 
 # Check if service is running
 check_service
+
+# Clear database before running tests
+clear_database
 
 echo -e "${CYAN}📋 Running Comprehensive Field Validation Tests${NC}"
 echo
@@ -111,11 +166,12 @@ run_test "Valid SMS send" "200" "curl -X POST '$BASE_URL/api/messages/sms' \
     \"from\": \"+12016661234\",
     \"to\": \"+18045551234\",
     \"type\": \"sms\",
+    \"messaging_provider_id\": \"test_provider_1\",
     \"body\": \"Hello! This is a test SMS message.\",
     \"attachments\": null,
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'"
+  -w '\nStatus: %{http_code}'" "true"
 
 # Test 2: Valid MMS send
 run_test "Valid MMS send" "200" "curl -X POST '$BASE_URL/api/messages/sms' \
@@ -124,11 +180,12 @@ run_test "Valid MMS send" "200" "curl -X POST '$BASE_URL/api/messages/sms' \
     \"from\": \"+12016661234\",
     \"to\": \"+18045551234\",
     \"type\": \"mms\",
+    \"messaging_provider_id\": \"test_provider_2\",
     \"body\": \"Hello! This is a test MMS message with attachment.\",
     \"attachments\": [\"https://example.com/image.jpg\"],
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'"
+  -w '\nStatus: %{http_code}'" "true"
 
 # Test 3: Valid Email send
 run_test "Valid Email send" "200" "curl -X POST '$BASE_URL/api/messages/email' \
@@ -136,11 +193,13 @@ run_test "Valid Email send" "200" "curl -X POST '$BASE_URL/api/messages/email' \
   -d '{
     \"from\": \"user@usehatchapp.com\",
     \"to\": \"contact@gmail.com\",
+    \"type\": \"email\",
+    \"messaging_provider_id\": \"test_provider_3\",
     \"body\": \"Hello! This is a test email message with <b>HTML</b> formatting.\",
     \"attachments\": [\"https://example.com/document.pdf\"],
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'"
+  -w '\nStatus: %{http_code}'" "true"
 
 # Test 4: Valid incoming SMS webhook
 run_test "Valid incoming SMS webhook" "200" "curl -X POST '$BASE_URL/api/webhooks/sms' \
@@ -154,7 +213,7 @@ run_test "Valid incoming SMS webhook" "200" "curl -X POST '$BASE_URL/api/webhook
     \"attachments\": null,
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'"
+  -w '\nStatus: %{http_code}'" "true"
 
 # Test 5: Valid incoming MMS webhook
 run_test "Valid incoming MMS webhook" "200" "curl -X POST '$BASE_URL/api/webhooks/sms' \
@@ -168,7 +227,7 @@ run_test "Valid incoming MMS webhook" "200" "curl -X POST '$BASE_URL/api/webhook
     \"attachments\": [\"https://example.com/received-image.jpg\"],
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'"
+  -w '\nStatus: %{http_code}'" "true"
 
 # Test 6: Valid incoming Email webhook
 run_test "Valid incoming Email webhook" "200" "curl -X POST '$BASE_URL/api/webhooks/email' \
@@ -181,7 +240,7 @@ run_test "Valid incoming Email webhook" "200" "curl -X POST '$BASE_URL/api/webho
     \"attachments\": [\"https://example.com/received-document.pdf\"],
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'"
+  -w '\nStatus: %{http_code}'" "true"
 
 # Test 7: Get conversations
 run_test "Get conversations" "200" "curl -X GET '$BASE_URL/api/conversations' \
