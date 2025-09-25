@@ -162,7 +162,6 @@ You have two options for running this project:
 - **Docker & Docker Compose** - For running the complete application
   - macOS: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) or use `brew install colima` for a lightweight alternative
   - Linux: Install Docker and docker-compose
-  - Windows: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 All C++ dependencies (CMake, compiler, cpp-httplib) are included in the Docker container.
 
@@ -173,22 +172,18 @@ If you prefer to build locally, ensure you have the following installed:
 - **Docker & Docker Compose** - For running PostgreSQL database
   - macOS: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) or use `brew install colima` for a lightweight alternative
   - Linux: Install Docker and docker-compose
-  - Windows: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 - **CMake** (version 3.16 or higher) - For building the C++ application
   - macOS: `brew install cmake`
   - Linux: `sudo apt-get install cmake` (Ubuntu/Debian) or `sudo yum install cmake` (RHEL/CentOS)
-  - Windows: Download from [cmake.org](https://cmake.org/download/) or use `winget install Kitware.CMake`
 
 - **C++ Compiler** with C++17 support
   - macOS: Xcode Command Line Tools (`xcode-select --install`)
   - Linux: GCC 7+ or Clang 5+
-  - Windows: Visual Studio 2019+ or MinGW, or use `winget install Microsoft.VisualStudio.2022.BuildTools`
 
 - **cpp-httplib** - HTTP server library
   - macOS: `brew install cpp-httplib`
   - Linux: Install from source or package manager
-  - Windows: Install via vcpkg or build from source
 
 ### Optional Tools
 
@@ -225,17 +220,6 @@ g++ --version  # or clang++ --version
 pkg-config --modversion cpp-httplib
 ```
 
-**Windows:**
-```cmd
-REM Quick dependency check
-bin\check-deps
-
-REM Or check manually:
-docker --version
-docker-compose --version
-cmake --version
-cl  # or g++ --version
-```
 
 ## Getting Started
 
@@ -279,11 +263,6 @@ curl http://localhost:8080/api/conversations
 3. Run `./bin/test` to run tests
 4. Run `./bin/stop` to stop the application
 
-**Windows:**
-1. Clone the repository
-2. Run `bin\start` to start the application using Docker
-3. Run `bin\test` to run tests
-4. Run `bin\stop` to stop the application
 
 **Alternative (using Make commands):**
 - `make setup` - Initialize the project and start PostgreSQL
@@ -332,20 +311,6 @@ The project includes several commands for easy development:
 - `make db-shell` - Connect to database shell
 - `make help` - Show all available commands
 
-**Windows (using make.bat):**
-- `make.bat check-deps` - Check if all required dependencies are installed
-- `make.bat setup` - Initialize project and start PostgreSQL database
-- `make.bat build` - Build the C++ application
-- `make.bat run` - Start the messaging service on port 8080 (default)
-- `make.bat run PORT=3000` - Start the messaging service on a custom port
-- `make.bat stop` - Stop the messaging service
-- `make.bat test` - Run endpoint tests
-- `make.bat clean` - Stop containers and clean up temporary files
-- `make.bat db-up` - Start PostgreSQL database only
-- `make.bat db-down` - Stop PostgreSQL database only
-- `make.bat db-logs` - Show database logs
-- `make.bat db-shell` - Connect to database shell
-- `make.bat help` - Show all available commands
 
 ## Development
 
@@ -486,39 +451,6 @@ make run PORT=3000    # Custom port
 ./bin/db-clear --help               # Show all options
 ```
 
-**Windows:**
-```cmd
-REM Default port (8080) - Recommended
-bin\start
-
-REM Custom port - Recommended
-bin\start 3000
-
-REM Show help for start script
-bin\start --help
-
-REM Alternative: Using Make commands
-make.bat run              REM Default port (8080)
-make.bat run PORT=3000    REM Custom port
-
-REM Alternative: Direct executable usage
-build\Release\messaging-service.exe 3000
-
-REM Database inspection
-bin\db-inspect                    # Show all tables and data
-bin\db-inspect --conversations    # Show only conversations
-bin\db-inspect --messages         # Show only messages
-bin\db-inspect --counts           # Show only row counts
-bin\db-inspect --help             # Show all options
-
-REM Database clearing (⚠️ WARNING: Deletes data!)
-bin\db-clear                      # Clear all tables with confirmation
-bin\db-clear --confirm            # Clear all tables without confirmation
-bin\db-clear --messages           # Clear only messages table
-bin\db-clear --conversations      # Clear only conversations table
-bin\db-clear --reset              # Clear all and reset sequences
-bin\db-clear --help               # Show all options
-```
 
 The application validates that the port is between 1 and 65535 and will show an error message for invalid ports. Both the start script and the C++ executable provide helpful error messages and usage information.
 

@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# Platform detection wrapper for stop script
-# This script detects the platform and calls the appropriate stop script
+# Stop script for messaging service
+# Supports Unix-like systems (Linux, macOS)
 
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
-    # Windows (Git Bash, Cygwin, or MSYS)
-    exec bin/windows/stop.bat "$@"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
+if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS
     exec bin/unix/stop.sh "$@"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
