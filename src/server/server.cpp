@@ -7,6 +7,10 @@
 MessagingServer::MessagingServer(int port) : port_(port) {
     //initialize instance
     server_ = std::make_unique<httplib::Server>();
+    
+    // Initialize shared message handler with worker pool
+    messageHandler_ = std::make_unique<MessageHandler>();
+    
     setupRoutes();
 }
 
@@ -38,15 +42,13 @@ void MessagingServer::setupRoutes() {
 
 void MessagingServer::setupMessageRoutes() {
     // Send SMS/MMS
-    server_->Post("/api/messages/sms", [](const httplib::Request& req, httplib::Response& res) {
-        MessageHandler handler;
-        handler.handleSendSms(req, res);
+    server_->Post("/api/messages/sms", [this](const httplib::Request& req, httplib::Response& res) {
+        messageHandler_->handleSendSms(req, res);
     });
     
     // Send Email
-    server_->Post("/api/messages/email", [](const httplib::Request& req, httplib::Response& res) {
-        MessageHandler handler;
-        handler.handleSendEmail(req, res);
+    server_->Post("/api/messages/email", [this](const httplib::Request& req, httplib::Response& res) {
+        messageHandler_->handleSendEmail(req, res);
     });
 }
 

@@ -16,6 +16,7 @@ set(SOURCES
     src/handlers/conversation_handler.cpp
     src/database/database.cpp
     src/utils/json_parser.cpp
+    src/utils/worker_pool.cpp
     src/providers/messaging_provider.cpp
     src/providers/implementations/DefaultMessagingProvider.cpp
 )

@@ -11,9 +11,9 @@ set -e
 SPECIFIC_TEST=""
 if [ $# -eq 1 ]; then
     SPECIFIC_TEST="$1"
-    # Validate that the parameter is a number between 1-20
-    if ! [[ "$SPECIFIC_TEST" =~ ^[0-9]+$ ]] || [ "$SPECIFIC_TEST" -lt 1 ] || [ "$SPECIFIC_TEST" -gt 20 ]; then
-        echo "Error: Test number must be between 1 and 20"
+    # Validate that the parameter is a number between 1-21
+    if ! [[ "$SPECIFIC_TEST" =~ ^[0-9]+$ ]] || [ "$SPECIFIC_TEST" -lt 1 ] || [ "$SPECIFIC_TEST" -gt 21 ]; then
+        echo "Error: Test number must be between 1 and 21"
         echo "Usage: $0 [test_number]"
         exit 1
     fi
@@ -41,6 +41,7 @@ run_test() {
     local expected_status="$2"
     local curl_command="$3"
     local should_create_message="${4:-false}"
+    local should_create_conversation="${5:-false}"
     
     TEST_COUNT=$((TEST_COUNT + 1))
     
@@ -53,6 +54,7 @@ run_test() {
     
     # Get current message count before test
     local initial_count=$(get_message_count)
+    local initial_conversation_count=$(get_conversation_count)
     
     # Run the curl command and capture the HTTP status code
     local response
@@ -69,15 +71,34 @@ run_test() {
         echo -e "${GREEN}✅ PASS${NC} - Expected status $expected_status, got $http_status"
         
         # If this test should create a message and was successful, verify database
+        local message_passed=false
+        local conversation_passed=false
         if [ "$should_create_message" = "true" ] && [ "$expected_status" = "200" ]; then
             local expected_count=$((initial_count + 1))
             if verify_message_count "$expected_count"; then
-                PASSED_COUNT=$((PASSED_COUNT + 1))
+                message_passed=true
             else
-                FAILED_COUNT=$((FAILED_COUNT + 1))
+                message_passed=false
             fi
         else
+            message_passed=true
+        fi
+
+        if [ "$should_create_conversation" = "true" ] && [ "$expected_status" = "200" ]; then
+            local expected_count=$((initial_conversation_count + 1))
+            if verify_conversation_count "$expected_count"; then
+                conversation_passed=true
+            else
+                conversation_passed=false
+            fi
+        else
+            conversation_passed=true
+        fi
+
+        if [ "$message_passed" = "true" ] && [ "$conversation_passed" = "true" ]; then
             PASSED_COUNT=$((PASSED_COUNT + 1))
+        else
+            FAILED_COUNT=$((FAILED_COUNT + 1))
         fi
     else
         echo -e "${RED}❌ FAIL${NC} - Expected status $expected_status, got $http_status"
@@ -123,6 +144,11 @@ get_message_count() {
     docker exec messaging-service-db psql -U messaging_user -d messaging_service -t -c "SELECT COUNT(*) FROM messages;" 2>/dev/null | tr -d ' \n'
 }
 
+# Function to get conversation count from database
+get_conversation_count() {
+    docker exec messaging-service-db psql -U messaging_user -d messaging_service -t -c "SELECT COUNT(*) FROM conversations;" 2>/dev/null | tr -d ' \n'
+}
+
 # Function to verify message count increment
 verify_message_count() {
     local expected_count="$1"
@@ -133,6 +159,19 @@ verify_message_count() {
         return 0
     else
         echo -e "${RED}❌ Database verification failed: $actual_count messages (expected: $expected_count)${NC}"
+        return 1
+    fi
+}
+
+verify_conversation_count() {
+    local expected_count="$1"
+    local actual_count=$(get_conversation_count)
+    
+    if [ "$actual_count" = "$expected_count" ]; then
+        echo -e "${GREEN}✅ Database verification: $actual_count conversations (expected: $expected_count)${NC}"
+        return 0
+    else
+        echo -e "${RED}❌ Database verification failed: $actual_count conversations (expected: $expected_count)${NC}"
         return 1
     fi
 }
@@ -170,7 +209,7 @@ run_test "Valid SMS send" "200" "curl -X POST '$BASE_URL/api/messages/sms' \
     \"attachments\": null,
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'" "true"
+  -w '\nStatus: %{http_code}'" "true" "true"
 
 # Test 2: Valid MMS send
 run_test "Valid MMS send" "200" "curl -X POST '$BASE_URL/api/messages/sms' \
@@ -183,7 +222,7 @@ run_test "Valid MMS send" "200" "curl -X POST '$BASE_URL/api/messages/sms' \
     \"attachments\": [\"https://example.com/image.jpg\"],
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'" "true"
+  -w '\nStatus: %{http_code}'" "true" "false"
 
 # Test 3: Valid Email send
 run_test "Valid Email send" "200" "curl -X POST '$BASE_URL/api/messages/email' \
@@ -196,7 +235,7 @@ run_test "Valid Email send" "200" "curl -X POST '$BASE_URL/api/messages/email' \
     \"attachments\": [\"https://example.com/document.pdf\"],
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'" "true"
+  -w '\nStatus: %{http_code}'" "true" "true"
 
 # Test 4: Valid incoming SMS webhook
 run_test "Valid incoming SMS webhook" "200" "curl -X POST '$BASE_URL/api/webhooks/sms' \
@@ -210,7 +249,7 @@ run_test "Valid incoming SMS webhook" "200" "curl -X POST '$BASE_URL/api/webhook
     \"attachments\": null,
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'" "true"
+  -w '\nStatus: %{http_code}'" "true" "false"
 
 # Test 5: Valid incoming MMS webhook
 run_test "Valid incoming MMS webhook" "200" "curl -X POST '$BASE_URL/api/webhooks/sms' \
@@ -224,7 +263,7 @@ run_test "Valid incoming MMS webhook" "200" "curl -X POST '$BASE_URL/api/webhook
     \"attachments\": [\"https://example.com/received-image.jpg\"],
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'" "true"
+  -w '\nStatus: %{http_code}'" "true" "false"
 
 # Test 6: Valid incoming Email webhook
 run_test "Valid incoming Email webhook" "200" "curl -X POST '$BASE_URL/api/webhooks/email' \
@@ -237,7 +276,7 @@ run_test "Valid incoming Email webhook" "200" "curl -X POST '$BASE_URL/api/webho
     \"attachments\": [\"https://example.com/received-document.pdf\"],
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
-  -w '\nStatus: %{http_code}'" "true"
+  -w '\nStatus: %{http_code}'" "true" "false"
 
 # Test 7: Get conversations
 run_test "Get conversations" "200" "curl -X GET '$BASE_URL/api/conversations' \
@@ -397,6 +436,83 @@ run_test "SMS data sent to email endpoint" "400" "curl -X POST '$BASE_URL/api/we
 run_test "Get messages for non-existent conversation" "404" "curl -X GET '$BASE_URL/api/conversations/99999/messages' \
   -H '$CONTENT_TYPE' \
   -w '\nStatus: %{http_code}'"
+
+# Test 21: Concurrency test - 10 simultaneous requests
+run_concurrency_test() {
+    local test_name="Concurrency test - 10 simultaneous requests"
+    TEST_COUNT=$((TEST_COUNT + 1))
+    
+    # Skip this test if we're running a specific test and this isn't it
+    if [ -n "$SPECIFIC_TEST" ] && [ "$TEST_COUNT" -ne "$SPECIFIC_TEST" ]; then
+        return 0
+    fi
+    
+    echo -e "${BLUE}Test $TEST_COUNT: $test_name${NC}"
+    
+    # Create temporary files for storing results
+    local temp_dir=$(mktemp -d)
+    local results_file="$temp_dir/results.txt"
+    local pids_file="$temp_dir/pids.txt"
+    
+    echo "Starting 10 concurrent requests..."
+    local start_time=$(date +%s.%N)
+    
+    # Launch 10 concurrent requests
+    for i in {1..10}; do
+        (
+            local response=$(curl -X POST "$BASE_URL/api/messages/sms" \
+                -H "$CONTENT_TYPE" \
+                -d "{
+                    \"from\": \"+1201666123$i\",
+                    \"to\": \"+1804555123$i\",
+                    \"type\": \"sms\",
+                    \"body\": \"Concurrent test message $i\",
+                    \"attachments\": null,
+                    \"timestamp\": \"2024-11-01T14:00:00Z\"
+                }" \
+                -w "\nStatus: %{http_code}" \
+                -s 2>/dev/null)
+            
+            local http_status=$(echo "$response" | tail -n 1 | grep -o '[0-9]\{3\}' || echo "000")
+            echo "Request $i: Status $http_status" >> "$results_file"
+        ) &
+        echo $! >> "$pids_file"
+    done
+    
+    # Wait for all background processes to complete
+    while read -r pid; do
+        wait "$pid"
+    done < "$pids_file"
+    
+    local end_time=$(date +%s.%N)
+    local duration=$(echo "$end_time - $start_time" | bc -l)
+    
+    # Display results
+    echo "Concurrent execution results:"
+    cat "$results_file"
+    
+    # Count successful requests
+    local success_count=$(grep -c "Status 200" "$results_file" 2>/dev/null || echo "0")
+    local total_requests=10
+    
+    echo -e "${CYAN}Concurrent execution time: ${duration}s${NC}"
+    echo -e "${CYAN}Successful requests: $success_count/$total_requests${NC}"
+    
+    # Clean up temporary files
+    rm -rf "$temp_dir"
+    
+    # Test passes if all 10 requests completed successfully
+    if [ "$success_count" -eq "$total_requests" ]; then
+        echo -e "${GREEN}✅ PASS${NC} - All 10 concurrent requests completed successfully"
+        PASSED_COUNT=$((PASSED_COUNT + 1))
+    else
+        echo -e "${RED}❌ FAIL${NC} - Only $success_count out of $total_requests requests succeeded"
+        FAILED_COUNT=$((FAILED_COUNT + 1))
+    fi
+    echo
+}
+
+run_concurrency_test
 
 echo
 echo -e "${PURPLE}=== TEST RESULTS SUMMARY ===${NC}"

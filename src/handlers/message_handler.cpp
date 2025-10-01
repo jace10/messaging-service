@@ -8,6 +8,17 @@
 
 using namespace messaging_service;
 
+MessageHandler::MessageHandler() 
+    : workerPool_(std::make_unique<WorkerPool>(10)) {
+    std::cout << "[MESSAGE HANDLER] Initialized with worker pool" << std::endl;
+}
+
+MessageHandler::~MessageHandler() {
+    if (workerPool_) {
+        workerPool_->stop();
+    }
+}
+
 void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Response& res) {
     logRequest("Send SMS", req.body);
     
@@ -61,8 +72,14 @@ void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Respons
             }
         }
         
-        // Send message through provider
-        MessageResponse providerResponse = provider->sendMessage(messageRequest);
+        // Send message through provider using worker pool
+        std::cout << "[MESSAGE HANDLER] Submitting sendMessage task to worker pool" << std::endl;
+        auto future = workerPool_->submit([provider, messageRequest]() {
+            return provider->sendMessage(messageRequest);
+        });
+        
+        // Wait for the result
+        MessageResponse providerResponse = future.get();
         
         // Connect to database
         Database db;
@@ -170,8 +187,14 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
             }
         }
         
-        // Send message through provider
-        MessageResponse providerResponse = provider->sendMessage(messageRequest);
+        // Send message through provider using worker pool
+        std::cout << "[MESSAGE HANDLER] Submitting sendMessage task to worker pool" << std::endl;
+        auto future = workerPool_->submit([provider, messageRequest]() {
+            return provider->sendMessage(messageRequest);
+        });
+        
+        // Wait for the result
+        MessageResponse providerResponse = future.get();
         
         // Connect to database
         Database db;

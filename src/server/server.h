@@ -3,6 +3,7 @@
 #include <httplib.h>
 #include <memory>
 #include <string>
+#include "../handlers/message_handler.h"
 
 //This is the class containing the server functions. 
 class MessagingServer {
@@ -10,6 +11,9 @@ private:
     //locally owned allocated smart pointer to an instance
     std::unique_ptr<httplib::Server> server_;
     int port_;
+    
+    // Shared message handler instance with worker pool
+    std::unique_ptr<MessageHandler> messageHandler_;
     
 public:
     /**
