@@ -1,0 +1,492 @@
+{
+  "info": {
+    "name": "Messaging Service API Collections",
+    "description": "Complete API test collections for the messaging service including success and failure test cases",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "description": "Base URL for the messaging service"
+    }
+  ],
+  "item": [
+    {
+      "name": "✅ Success Tests",
+      "description": "Collection of tests that should return 200 status codes",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check if the service is running and healthy"
+          },
+          "response": []
+        },
+        {
+          "name": "Send SMS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+12016661234\",\n  \"to\": \"+18045551234\",\n  \"type\": \"sms\",\n  \"body\": \"Hello! This is a test SMS message.\",\n  \"attachments\": null,\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "messages", "sms"]
+            },
+            "description": "Send a valid SMS message"
+          },
+          "response": []
+        },
+        {
+          "name": "Send MMS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+12016661234\",\n  \"to\": \"+18045551234\",\n  \"type\": \"mms\",\n  \"body\": \"Hello! This is a test MMS message with attachment.\",\n  \"attachments\": [\"https://example.com/image.jpg\"],\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "messages", "sms"]
+            },
+            "description": "Send a valid MMS message with attachment"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"user@usehatchapp.com\",\n  \"to\": \"contact@gmail.com\",\n  \"type\": \"email\",\n  \"body\": \"Hello! This is a test email message with <b>HTML</b> formatting.\",\n  \"attachments\": [\"https://example.com/document.pdf\"],\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "messages", "email"]
+            },
+            "description": "Send a valid email message with HTML content and attachment"
+          },
+          "response": []
+        },
+        {
+          "name": "Incoming SMS Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+18045551234\",\n  \"to\": \"+12016661234\",\n  \"type\": \"sms\",\n  \"messaging_provider_id\": \"message-1\",\n  \"body\": \"This is an incoming SMS message\",\n  \"attachments\": null,\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "sms"]
+            },
+            "description": "Simulate an incoming SMS webhook from a provider"
+          },
+          "response": []
+        },
+        {
+          "name": "Incoming MMS Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+18045551234\",\n  \"to\": \"+12016661234\",\n  \"type\": \"mms\",\n  \"messaging_provider_id\": \"message-2\",\n  \"body\": \"This is an incoming MMS message\",\n  \"attachments\": [\"https://example.com/received-image.jpg\"],\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "sms"]
+            },
+            "description": "Simulate an incoming MMS webhook from a provider"
+          },
+          "response": []
+        },
+        {
+          "name": "Incoming Email Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"contact@gmail.com\",\n  \"to\": \"user@usehatchapp.com\",\n  \"xillio_id\": \"message-3\",\n  \"body\": \"<html><body>This is an incoming email with <b>HTML</b> content</body></html>\",\n  \"attachments\": [\"https://example.com/received-document.pdf\"],\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "email"]
+            },
+            "description": "Simulate an incoming email webhook from a provider"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/conversations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "conversations"]
+            },
+            "description": "Retrieve all conversations from the database"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Messages for Conversation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/conversations/1/messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "conversations", "1", "messages"]
+            },
+            "description": "Retrieve all messages for a specific conversation"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "❌ Expected Fail Tests",
+      "description": "Collection of tests that should return error status codes (400, 404, 500)",
+      "item": [
+        {
+          "name": "Missing 'from' Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"+12016661234\",\n  \"type\": \"sms\",\n  \"messaging_provider_id\": \"message-1\",\n  \"body\": \"Missing from field\",\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "sms"]
+            },
+            "description": "Test missing required 'from' field - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing 'to' Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+18045551234\",\n  \"type\": \"sms\",\n  \"messaging_provider_id\": \"message-1\",\n  \"body\": \"Missing to field\",\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "sms"]
+            },
+            "description": "Test missing required 'to' field - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing 'type' Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+18045551234\",\n  \"to\": \"+12016661234\",\n  \"messaging_provider_id\": \"message-1\",\n  \"body\": \"Missing type field\",\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "sms"]
+            },
+            "description": "Test missing required 'type' field - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing 'messaging_provider_id' Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+18045551234\",\n  \"to\": \"+12016661234\",\n  \"type\": \"sms\",\n  \"body\": \"Missing messaging_provider_id field\",\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "sms"]
+            },
+            "description": "Test missing required 'messaging_provider_id' field - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing 'body' Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+18045551234\",\n  \"to\": \"+12016661234\",\n  \"type\": \"sms\",\n  \"messaging_provider_id\": \"message-1\",\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "sms"]
+            },
+            "description": "Test missing required 'body' field - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing 'timestamp' Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+18045551234\",\n  \"to\": \"+12016661234\",\n  \"type\": \"sms\",\n  \"messaging_provider_id\": \"message-1\",\n  \"body\": \"Missing timestamp field\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "sms"]
+            },
+            "description": "Test missing required 'timestamp' field - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Message Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+18045551234\",\n  \"to\": \"+12016661234\",\n  \"type\": \"invalid_type\",\n  \"messaging_provider_id\": \"message-1\",\n  \"body\": \"Invalid type field\",\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "sms"]
+            },
+            "description": "Test invalid message type - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Empty Required Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"\",\n  \"to\": \"\",\n  \"type\": \"sms\",\n  \"messaging_provider_id\": \"\",\n  \"body\": \"\",\n  \"timestamp\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "sms"]
+            },
+            "description": "Test empty required fields - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Email Webhook Missing 'xillio_id'",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"contact@gmail.com\",\n  \"to\": \"user@usehatchapp.com\",\n  \"body\": \"Missing xillio_id field\",\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "email"]
+            },
+            "description": "Test email webhook missing required 'xillio_id' field - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid JSON Format",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+18045551234\",\n  \"to\": \"+12016661234\",\n  \"type\": \"sms\",\n  \"messaging_provider_id\": \"message-1\",\n  \"body\": \"Invalid JSON\",\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n  // Missing closing brace"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "sms"]
+            },
+            "description": "Test invalid JSON format - should return 500"
+          },
+          "response": []
+        },
+        {
+          "name": "SMS Data to Email Endpoint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"+18045551234\",\n  \"to\": \"+12016661234\",\n  \"type\": \"sms\",\n  \"messaging_provider_id\": \"message-1\",\n  \"body\": \"SMS sent to email endpoint\",\n  \"timestamp\": \"2024-11-01T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "email"]
+            },
+            "description": "Test SMS data sent to email endpoint - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Non-existent Conversation Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/conversations/99999/messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "conversations", "99999", "messages"]
+            },
+            "description": "Test getting messages for non-existent conversation - should return 404"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
+
