@@ -75,17 +75,27 @@ public:
      * @param messaging_provider_id The ID of the messaging provider used
      * @param timestamp The timestamp when the message was sent/received
      * @param direction The direction of the message (inbound, outbound)
-     * @return true if insertion successful, false otherwise
+     * @param sent_time The timestamp when the message was actually sent (optional)
+     * @return Message ID if insertion successful, -1 if failed
      */
-    bool insertMessage(int conversation_id, 
-                      const std::string& from_address,
-                      const std::string& to_address,
-                      const std::string& message_type,
-                      const std::string& body,
-                      const std::string& attachments,
-                      const std::string& messaging_provider_id,
-                      const std::string& timestamp,
-                      const std::string& direction);
+    int insertMessage(int conversation_id, 
+                     const std::string& from_address,
+                     const std::string& to_address,
+                     const std::string& message_type,
+                     const std::string& body,
+                     const std::string& attachments,
+                     const std::string& messaging_provider_id,
+                     const std::string& timestamp,
+                     const std::string& direction,
+                     const std::string& sent_time = "");
+    
+    /**
+     * @brief Update the sent_time for a message
+     * @param message_id The ID of the message to update
+     * @param sent_time The timestamp when the message was actually sent
+     * @return true if update successful, false otherwise
+     */
+    bool updateMessageSentTime(int message_id, const std::string& sent_time);
     
 private:
     /**

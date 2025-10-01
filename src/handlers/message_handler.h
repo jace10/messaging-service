@@ -4,6 +4,8 @@
 #include <string>
 #include <memory>
 #include "../utils/worker_pool.h"
+#include "../utils/message_scheduler.h"
+#include "../providers/messaging_provider.h"
 
 //This class handles sending messages
 class MessageHandler {
@@ -40,8 +42,20 @@ private:
      */
     void logRequest(const std::string& endpoint, const std::string& body);
     
+    
+    /**
+     * @brief Get current timestamp in ISO format
+     * @return Current timestamp as ISO string
+     */
+    std::string getCurrentTimestamp();
+    
     /**
      * @brief Worker pool for handling provider sendMessage operations
      */
     std::unique_ptr<messaging_service::WorkerPool> workerPool_;
+    
+    /**
+     * @brief Message scheduler for handling delayed message sending
+     */
+    std::unique_ptr<messaging_service::MessageScheduler> messageScheduler_;
 };

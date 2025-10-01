@@ -125,7 +125,7 @@ std::string Database::getMessagesForConversation(int conversation_id) {
     
     std::string select_query = R"(
         SELECT id, conversation_id, from_address, to_address, message_type, body, 
-               attachments, messaging_provider_id, timestamp, created_at, direction
+               attachments, messaging_provider_id, timestamp, sent_time, created_at, direction
         FROM messages 
         WHERE conversation_id = $1 
         ORDER BY timestamp ASC
@@ -160,8 +160,9 @@ std::string Database::getMessagesForConversation(int conversation_id) {
         std::string attachments = PQgetvalue(result.get(), i, 6);
         std::string messaging_provider_id = PQgetvalue(result.get(), i, 7);
         std::string timestamp = PQgetvalue(result.get(), i, 8);
-        std::string created_at = PQgetvalue(result.get(), i, 9);
-        std::string direction = PQgetvalue(result.get(), i, 10);
+        std::string sent_time = PQgetvalue(result.get(), i, 9);
+        std::string created_at = PQgetvalue(result.get(), i, 10);
+        std::string direction = PQgetvalue(result.get(), i, 11);
         
         json_response += "{";
         json_response += "\"id\":" + id + ",";
@@ -173,6 +174,7 @@ std::string Database::getMessagesForConversation(int conversation_id) {
         json_response += "\"attachments\":" + attachments + ",";
         json_response += "\"messaging_provider_id\":\"" + messaging_provider_id + "\",";
         json_response += "\"timestamp\":\"" + timestamp + "\",";
+        json_response += "\"sent_time\":\"" + sent_time + "\",";
         json_response += "\"created_at\":\"" + created_at + "\",";
         json_response += "\"direction\":\"" + direction + "\"";
         json_response += "}";
@@ -182,7 +184,7 @@ std::string Database::getMessagesForConversation(int conversation_id) {
     return json_response;
 }
 
-bool Database::insertMessage(int conversation_id, 
+int Database::insertMessage(int conversation_id, 
                            const std::string& from_address,
                            const std::string& to_address,
                            const std::string& message_type,
@@ -190,15 +192,17 @@ bool Database::insertMessage(int conversation_id,
                            const std::string& attachments,
                            const std::string& messaging_provider_id,
                            const std::string& timestamp,
-                           const std::string& direction) {
+                           const std::string& direction,
+                           const std::string& sent_time) {
     if (!isConnected()) {
         std::cerr << "Database not connected" << std::endl;
-        return false;
+        return -1;
     }
     
     std::string insert_query = R"(
-        INSERT INTO messages (conversation_id, from_address, to_address, message_type, body, attachments, messaging_provider_id, timestamp, direction)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO messages (conversation_id, from_address, to_address, message_type, body, attachments, messaging_provider_id, timestamp, direction, sent_time)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id
     )";
     
     std::string conversation_id_str = std::to_string(conversation_id);
@@ -211,7 +215,8 @@ bool Database::insertMessage(int conversation_id,
         attachments.c_str(),
         messaging_provider_id.c_str(),
         timestamp.c_str(),
-        direction.c_str()
+        direction.c_str(),
+        sent_time.empty() ? nullptr : sent_time.c_str() // Use nullptr for empty string to represent NULL
     };
     
     int param_lengths[] = {
@@ -223,18 +228,52 @@ bool Database::insertMessage(int conversation_id,
         static_cast<int>(attachments.length()),
         static_cast<int>(messaging_provider_id.length()),
         static_cast<int>(timestamp.length()),
-        static_cast<int>(direction.length())
+        static_cast<int>(direction.length()),
+        sent_time.empty() ? 0 : static_cast<int>(sent_time.length()) // 0 length for NULL
     };
     
-    int param_formats[] = {0, 0, 0, 0, 0, 0, 0, 0, 0}; // all text format
+    int param_formats[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // all text format
     
-    auto result = std::unique_ptr<PGresult, decltype(&PQclear)>(PQexecParams(connection_.get(), insert_query.c_str(), 9, nullptr, param_values, param_lengths, param_formats, 0), PQclear);
+    auto result = std::unique_ptr<PGresult, decltype(&PQclear)>(PQexecParams(connection_.get(), insert_query.c_str(), 10, nullptr, param_values, param_lengths, param_formats, 0), PQclear);
+    
+    if (PQresultStatus(result.get()) == PGRES_TUPLES_OK) {
+        // Get the returned message ID
+        char* id_str = PQgetvalue(result.get(), 0, 0);
+        return std::atoi(id_str);
+    }
+    
+    std::cerr << "Failed to insert message: " << PQerrorMessage(connection_.get()) << std::endl;
+    return -1;
+}
+
+bool Database::updateMessageSentTime(int message_id, const std::string& sent_time) {
+    if (!isConnected()) {
+        std::cerr << "Database not connected" << std::endl;
+        return false;
+    }
+    
+    std::string update_query = "UPDATE messages SET sent_time = $1 WHERE id = $2";
+    
+    std::string message_id_str = std::to_string(message_id);
+    const char* param_values[] = {
+        sent_time.c_str(),
+        message_id_str.c_str()
+    };
+    
+    int param_lengths[] = {
+        static_cast<int>(sent_time.length()),
+        static_cast<int>(message_id_str.length())
+    };
+    
+    int param_formats[] = {0, 0}; // all text format
+    
+    auto result = std::unique_ptr<PGresult, decltype(&PQclear)>(PQexecParams(connection_.get(), update_query.c_str(), 2, nullptr, param_values, param_lengths, param_formats, 0), PQclear);
     
     if (PQresultStatus(result.get()) == PGRES_COMMAND_OK) {
         return true;
     }
     
-    std::cerr << "Failed to insert message: " << PQerrorMessage(connection_.get()) << std::endl;
+    std::cerr << "Failed to update message sent_time: " << PQerrorMessage(connection_.get()) << std::endl;
     return false;
 }
 

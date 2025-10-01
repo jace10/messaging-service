@@ -51,8 +51,8 @@ void WebhookHandler::handleIncomingSms(const httplib::Request& req, httplib::Res
             return;
         }
         
-        // Store message in database
-        bool success = db.insertMessage(
+        // Store message in database - for inbound messages, sent_time is the timestamp
+        int message_id = db.insertMessage(
             conversation_id,
             from,
             to,
@@ -61,10 +61,11 @@ void WebhookHandler::handleIncomingSms(const httplib::Request& req, httplib::Res
             attachments,
             messaging_provider_id,
             timestamp,
-            "inbound"
+            "inbound",
+            timestamp // For inbound messages, sent_time is the same as timestamp
         );
         
-        if (!success) {
+        if (message_id == -1) {
             res.status = toInt(StatusCodeType::INTERNAL_SERVER_ERROR);
             res.set_content("{\"status\": \"error\", \"message\": \"Failed to store message\"}", "application/json");
             return;
@@ -116,8 +117,8 @@ void WebhookHandler::handleIncomingEmail(const httplib::Request& req, httplib::R
             return;
         }
 
-        // Store message in database
-        bool success = db.insertMessage(
+        // Store message in database - for inbound messages, sent_time is the timestamp
+        int message_id = db.insertMessage(
             conversation_id,
             from,
             to,
@@ -126,10 +127,11 @@ void WebhookHandler::handleIncomingEmail(const httplib::Request& req, httplib::R
             attachments,
             xillio_id,
             timestamp,
-            "inbound"
+            "inbound",
+            timestamp // For inbound messages, sent_time is the same as timestamp
         );
-
-        if (!success) {
+        
+        if (message_id == -1) {
             res.status = toInt(StatusCodeType::INTERNAL_SERVER_ERROR);
             res.set_content("{\"status\": \"error\", \"message\": \"Failed to store message\"}", "application/json");
             return;

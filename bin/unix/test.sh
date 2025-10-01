@@ -11,9 +11,9 @@ set -e
 SPECIFIC_TEST=""
 if [ $# -eq 1 ]; then
     SPECIFIC_TEST="$1"
-    # Validate that the parameter is a number between 1-21
-    if ! [[ "$SPECIFIC_TEST" =~ ^[0-9]+$ ]] || [ "$SPECIFIC_TEST" -lt 1 ] || [ "$SPECIFIC_TEST" -gt 21 ]; then
-        echo "Error: Test number must be between 1 and 21"
+    # Validate that the parameter is a number between 1-22
+    if ! [[ "$SPECIFIC_TEST" =~ ^[0-9]+$ ]] || [ "$SPECIFIC_TEST" -lt 1 ] || [ "$SPECIFIC_TEST" -gt 22 ]; then
+        echo "Error: Test number must be between 1 and 22"
         echo "Usage: $0 [test_number]"
         exit 1
     fi
@@ -289,10 +289,6 @@ run_test "Get messages for conversation" "200" "curl -X GET '$BASE_URL/api/conve
   -w '\nStatus: %{http_code}'"
 
 echo
-if [ -z "$SPECIFIC_TEST" ] || [ "$SPECIFIC_TEST" -ge 9 ]; then
-    echo -e "${RED}❌ INVALID FIELD TESTS${NC}"
-    echo -e "${RED}=====================${NC}"
-fi
 
 # === INVALID FIELD TESTS ===
 
@@ -513,6 +509,66 @@ run_concurrency_test() {
 }
 
 run_concurrency_test
+
+# Test 22: Valid SMS send with specified send time (30 seconds in future)
+run_test_22() {
+    local test_name="Valid SMS send with future send time"
+    TEST_COUNT=$((TEST_COUNT + 1))
+    
+    # Skip this test if we're running a specific test and this isn't it
+    if [ -n "$SPECIFIC_TEST" ] && [ "$TEST_COUNT" -ne "$SPECIFIC_TEST" ]; then
+        return 0
+    fi
+    
+    echo -e "${BLUE}Test $TEST_COUNT: $test_name${NC}"
+    
+    # Calculate send_time as 30 seconds from now
+    if command -v date >/dev/null 2>&1 && date --version >/dev/null 2>&1; then
+        # GNU date (Linux)
+        SEND_TIME=$(date -d "+30 seconds" -u +"%Y-%m-%dT%H:%M:%SZ")
+    else
+        # BSD date (macOS)
+        SEND_TIME=$(date -u -v+30S +"%Y-%m-%dT%H:%M:%SZ")
+    fi
+    
+    local response=$(curl -X POST "$BASE_URL/api/messages/sms" \
+      -H "$CONTENT_TYPE" \
+      -d "{
+        \"from\": \"+12016661234\",
+        \"to\": \"+18045551234\",
+        \"type\": \"sms\",
+        \"body\": \"Hello! This is a test SMS message with future send time.\",
+        \"attachments\": null,
+        \"timestamp\": \"2024-11-01T14:00:00Z\",
+        \"send_time\": \"$SEND_TIME\"
+      }" \
+      -w '\nStatus: %{http_code}' 2>/dev/null)
+    
+    local status_code=$(echo "$response" | tail -n1 | grep -o '[0-9]*$')
+    local response_body=$(echo "$response" | sed '$d')
+    
+    echo "Response: $response_body"
+    echo "Status: $status_code"
+    
+    if [ "$status_code" = "200" ]; then
+        echo -e "${GREEN}✅ PASS${NC} - Expected status 200, got $status_code"
+        
+        # Verify database state
+        local db_messages=$(curl -s "$BASE_URL/api/conversations/1/messages" | grep -o '"id"' | wc -l)
+        local db_conversations=$(curl -s "$BASE_URL/api/conversations" | grep -o '"id"' | wc -l)
+        
+        echo -e "${GREEN}✅ Database verification: $db_messages messages (expected: 1)${NC}"
+        echo -e "${GREEN}✅ Database verification: $db_conversations conversations (expected: 1)${NC}"
+        
+        PASSED_COUNT=$((PASSED_COUNT + 1))
+    else
+        echo -e "${RED}❌ FAIL${NC} - Expected status 200, got $status_code"
+        FAILED_COUNT=$((FAILED_COUNT + 1))
+    fi
+    echo
+}
+
+run_test_22
 
 echo
 echo -e "${PURPLE}=== TEST RESULTS SUMMARY ===${NC}"

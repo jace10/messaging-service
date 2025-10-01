@@ -1,19 +1,31 @@
 #include "message_handler.h"
 #include "../database/database.h"
 #include "../utils/json_parser.h"
+#include "../utils/message_scheduler.h"
 #include "../types/status_codes.h"
 #include "../providers/messaging_provider.h"
 #include <iostream>
 #include <vector>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+#include <thread>
+#include <ctime>
 
 using namespace messaging_service;
 
 MessageHandler::MessageHandler() 
-    : workerPool_(std::make_unique<WorkerPool>(10)) {
+    : workerPool_(std::make_unique<WorkerPool>(10)),
+      messageScheduler_(std::make_unique<MessageScheduler>(workerPool_.get())) {
     std::cout << "[MESSAGE HANDLER] Initialized with worker pool" << std::endl;
+    messageScheduler_->start();
+    std::cout << "[MESSAGE HANDLER] Started message scheduler" << std::endl;
 }
 
 MessageHandler::~MessageHandler() {
+    if (messageScheduler_) {
+        messageScheduler_->stop();
+    }
     if (workerPool_) {
         workerPool_->stop();
     }
@@ -33,6 +45,7 @@ void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Respons
         std::string body = json_data["body"];
         std::string attachments = json_data.count("attachments") ? json_data["attachments"] : "null";
         std::string timestamp = json_data["timestamp"];
+        std::string send_time = json_data.count("send_time") ? json_data["send_time"] : "null";
         
         // Validate required fields
         if (from.empty() || to.empty() || type.empty() || body.empty() || timestamp.empty()) {
@@ -97,32 +110,77 @@ void MessageHandler::handleSendSms(const httplib::Request& req, httplib::Respons
             return;
         }
         
-        // Store message in database with provider response
-        bool success = db.insertMessage(
-            conversation_id,
-            from,
-            to,
-            type,
-            body,
-            attachments,
-            providerResponse.provider_message_id,
-            timestamp,
-            "outbound"
-        );
+        // Check if this is a scheduled message
+        bool isScheduled = (send_time != "null" && !send_time.empty());
         
-        if (!success) {
-            res.status = toInt(StatusCodeType::INTERNAL_SERVER_ERROR);
-            res.set_content("{\"status\": \"error\", \"message\": \"Failed to store message\"}", "application/json");
-            return;
-        }
-        
-        // Return response based on provider result
-        if (providerResponse.success) {
+        if (isScheduled) {
+            // For scheduled messages, store with sent_time=NULL and schedule for later
+            int message_id = db.insertMessage(
+                conversation_id,
+                from,
+                to,
+                type,
+                body,
+                attachments,
+                providerResponse.provider_message_id,
+                timestamp,
+                "outbound",
+                "" // sent_time is NULL for scheduled messages
+            );
+            
+            if (message_id == -1) {
+                res.status = toInt(StatusCodeType::INTERNAL_SERVER_ERROR);
+                res.set_content("{\"status\": \"error\", \"message\": \"Failed to store scheduled message\"}", "application/json");
+                return;
+            }
+            
+            // Schedule the message for future sending using the new scheduler
+            messageScheduler_->scheduleMessage(
+                message_id,
+                conversation_id,
+                from,
+                to,
+                type,
+                body,
+                attachments,
+                providerResponse.provider_message_id,
+                timestamp,
+                send_time,
+                provider
+            );
+            
             res.status = toInt(StatusCodeType::OK);
-            res.set_content("{\"status\": \"success\", \"message\": \"" + providerResponse.message + "\", \"conversation_id\": " + std::to_string(conversation_id) + ", \"provider_message_id\": \"" + providerResponse.provider_message_id + "\"}", "application/json");
+            res.set_content("{\"status\": \"success\", \"message\": \"Message scheduled for delivery\", \"conversation_id\": " + std::to_string(conversation_id) + ", \"message_id\": " + std::to_string(message_id) + ", \"scheduled_time\": \"" + send_time + "\"}", "application/json");
         } else {
-            res.status = providerResponse.http_status_code;
-            res.set_content("{\"status\": \"error\", \"message\": \"" + providerResponse.message + "\", \"error_code\": \"" + providerResponse.error_code + "\"}", "application/json");
+            // For immediate messages, store with sent_time and return provider response
+            std::string currentTime = getCurrentTimestamp();
+            int message_id = db.insertMessage(
+                conversation_id,
+                from,
+                to,
+                type,
+                body,
+                attachments,
+                providerResponse.provider_message_id,
+                timestamp,
+                "outbound",
+                currentTime // sent_time is set to current time for immediate messages
+            );
+            
+            if (message_id == -1) {
+                res.status = toInt(StatusCodeType::INTERNAL_SERVER_ERROR);
+                res.set_content("{\"status\": \"error\", \"message\": \"Failed to store message\"}", "application/json");
+                return;
+            }
+            
+            // Return response based on provider result
+            if (providerResponse.success) {
+                res.status = toInt(StatusCodeType::OK);
+                res.set_content("{\"status\": \"success\", \"message\": \"" + providerResponse.message + "\", \"conversation_id\": " + std::to_string(conversation_id) + ", \"message_id\": " + std::to_string(message_id) + ", \"provider_message_id\": \"" + providerResponse.provider_message_id + "\"}", "application/json");
+            } else {
+                res.status = providerResponse.http_status_code;
+                res.set_content("{\"status\": \"error\", \"message\": \"" + providerResponse.message + "\", \"error_code\": \"" + providerResponse.error_code + "\"}", "application/json");
+            }
         }
         
     } catch (const std::exception& e) {
@@ -146,6 +204,7 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
         std::string timestamp = json_data["timestamp"];
         std::string subject = json_data.count("subject") ? json_data["subject"] : "";
         std::string attachments = json_data.count("attachments") ? json_data["attachments"] : "null";
+        std::string send_time = json_data.count("send_time") ? json_data["send_time"] : "null";
         
         // Validate required fields
         if (from.empty() || to.empty() || type.empty() || 
@@ -212,8 +271,9 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
             return;
         }
         
-        // Store message in database with provider response
-        bool success = db.insertMessage(
+        // For email messages, always send immediately (no scheduling support yet)
+        std::string currentTime = getCurrentTimestamp();
+        int message_id = db.insertMessage(
             conversation_id,
             from,
             to,
@@ -222,10 +282,11 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
             attachments,
             providerResponse.provider_message_id,
             timestamp,
-            "outbound"
+            "outbound",
+            currentTime // sent_time is set to current time for immediate messages
         );
         
-        if (!success) {
+        if (message_id == -1) {
             res.status = toInt(StatusCodeType::INTERNAL_SERVER_ERROR);
             res.set_content("{\"status\": \"error\", \"message\": \"Failed to store message\"}", "application/json");
             return;
@@ -234,7 +295,7 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
         // Return response based on provider result
         if (providerResponse.success) {
             res.status = toInt(StatusCodeType::OK);
-            res.set_content("{\"status\": \"success\", \"message\": \"" + providerResponse.message + "\", \"conversation_id\": " + std::to_string(conversation_id) + ", \"provider_message_id\": \"" + providerResponse.provider_message_id + "\"}", "application/json");
+            res.set_content("{\"status\": \"success\", \"message\": \"" + providerResponse.message + "\", \"conversation_id\": " + std::to_string(conversation_id) + ", \"message_id\": " + std::to_string(message_id) + ", \"provider_message_id\": \"" + providerResponse.provider_message_id + "\"}", "application/json");
         } else {
             res.status = providerResponse.http_status_code;
             res.set_content("{\"status\": \"error\", \"message\": \"" + providerResponse.message + "\", \"error_code\": \"" + providerResponse.error_code + "\"}", "application/json");
@@ -248,4 +309,16 @@ void MessageHandler::handleSendEmail(const httplib::Request& req, httplib::Respo
 
 void MessageHandler::logRequest(const std::string& endpoint, const std::string& body) {
     std::cout << "[" << endpoint << "] Received request: " << body << std::endl;
+}
+
+
+std::string MessageHandler::getCurrentTimestamp() {
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    
+    std::stringstream ss;
+    ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%dT%H:%M:%S");
+    ss << '.' << std::setfill('0') << std::setw(3) << ms.count() << 'Z';
+    return ss.str();
 }
